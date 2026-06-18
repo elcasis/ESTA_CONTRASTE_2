@@ -1,0 +1,3688 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contraste de Hipótesis - Inferencia Estadística</title>
+  <!-- Google Fonts: Outfit for modern, clean typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+  
+  <style>
+    /* VARIABLES DE DISEÑO NEÓN OSCURO */
+    :root {
+      --bg-black: #000000;
+      --bg-grey-dark: #09090b;
+      --bg-grey-medium: #18181b;
+      --bg-grey-light: #27272a;
+      
+      --accent-cyan: #00f0ff;
+      --accent-green: #39ff14;
+      --accent-red: #ff3366;
+      --accent-purple: #bd00ff;
+      
+      --text-high: #ffffff;
+      --text-medium: #a1a1aa;
+      --text-low: #71717a;
+      
+      --glow-cyan: 0 0 15px rgba(0, 240, 255, 0.4);
+      --glow-green: 0 0 15px rgba(57, 255, 20, 0.4);
+      --glow-red: 0 0 15px rgba(255, 51, 102, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      font-family: 'Outfit', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-black);
+      color: var(--text-high);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* CONTENEDOR PRINCIPAL: Simula 19.5:9 Horizontal en Desktop, pantalla completa en móvil horizontal */
+    .app-container {
+      width: 100%;
+      height: 100vh;
+      max-width: 892px; /* Ancho para 19.5:9 Horizontal */
+      max-height: 412px; /* Alto para 19.5:9 Horizontal */
+      background-color: var(--bg-grey-dark);
+      border: 1px solid var(--bg-grey-light);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+      border-radius: 24px;
+    }
+
+    /* Adaptación móvil total */
+    @media (max-width: 900px) and (max-height: 500px) {
+      .app-container {
+        max-width: 100%;
+        max-height: 100vh;
+        border-radius: 0;
+        border: none;
+      }
+    }
+    @media (max-width: 500px) {
+      .app-container {
+        max-width: 100%;
+        max-height: 100vh;
+        border-radius: 0;
+        border: none;
+      }
+    }
+
+    /* HEADER DE LA APLICACIÓN */
+    .app-header {
+      padding: 12px 20px;
+      background: rgba(0,0,0,0.8);
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .app-header h1 {
+      font-size: 1.05rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--accent-cyan);
+      text-shadow: var(--glow-cyan);
+    }
+
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .btn-header-tool {
+      background: var(--bg-grey-medium);
+      border: 1px solid var(--bg-grey-light);
+      color: var(--text-high);
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-header-tool:active {
+      background: var(--bg-grey-light);
+      transform: scale(0.95);
+    }
+
+    .step-indicator {
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: var(--accent-cyan);
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid var(--accent-cyan);
+      padding: 4px 10px;
+      border-radius: 8px;
+    }
+
+    .exercise-badge {
+      font-size: 0.75rem;
+      font-weight: 800;
+      color: var(--accent-green);
+      background: rgba(57, 255, 20, 0.1);
+      border: 1px solid var(--accent-green);
+      padding: 4px 10px;
+      border-radius: 8px;
+    }
+
+    /* BARRA DE PROGRESO */
+    .progress-bar-container {
+      width: 100%;
+      height: 3px;
+      background-color: var(--bg-grey-medium);
+      position: relative;
+      z-index: 10;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green));
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 8px var(--accent-cyan);
+    }
+
+    /* VISTA DE FASES */
+    .phases-viewport {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .phase-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      padding: 16px 20px;
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr; /* Diseño horizontal a 2 columnas */
+      gap: 20px;
+      opacity: 0;
+      transform: translateX(100%);
+      transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .phase-screen.active {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: all;
+    }
+
+    .phase-screen.completed {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+
+    /* Columnas para el contenido */
+    .phase-col-left {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+
+    .phase-col-right {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: stretch;
+      overflow-y: auto;
+    }
+
+    /* TEXTOS Y TÍTULOS */
+    .intro-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 6px;
+      background: linear-gradient(135deg, var(--text-high) 60%, var(--accent-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .intro-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-medium);
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+
+    /* TEXTO CON PALABRAS CLICKABLES (SIN COLOR DIFERENTE) */
+    .clickable-problem-text {
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: var(--text-high);
+      margin-bottom: 12px;
+    }
+
+    .clickable-data {
+      color: inherit;
+      background: none;
+      border: none;
+      font-size: inherit;
+      font-weight: inherit;
+      font-family: inherit;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline;
+      padding: 1px 2px;
+      border-radius: 4px;
+      transition: background-color 0.2s;
+    }
+
+    .clickable-data:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .clickable-data.used {
+      text-decoration: underline;
+      text-decoration-color: var(--accent-cyan);
+    }
+
+    /* TARJETAS */
+    .info-card {
+      background-color: var(--bg-grey-medium);
+      border: 1px solid var(--bg-grey-light);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .info-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 3px;
+      height: 100%;
+      background-color: var(--accent-cyan);
+    }
+
+    .info-card.red::before {
+      background-color: var(--accent-red);
+    }
+    
+    .info-card.green::before {
+      background-color: var(--accent-green);
+    }
+
+    .info-card-title {
+      font-size: 0.7rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-low);
+      margin-bottom: 4px;
+    }
+
+    .info-card-text {
+      font-size: 0.85rem;
+      line-height: 1.4;
+      color: var(--text-high);
+    }
+
+    .highlight-cyan { color: var(--accent-cyan); font-weight: 600; }
+    .highlight-green { color: var(--accent-green); font-weight: 600; }
+    .highlight-red { color: var(--accent-red); font-weight: 600; }
+
+    /* BOTONES */
+    .btn-action {
+      background: var(--bg-grey-medium);
+      border: 1px solid var(--bg-grey-light);
+      color: var(--text-high);
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn-action:active {
+      transform: scale(0.98);
+      background: var(--bg-grey-light);
+    }
+
+    .btn-action.primary {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--bg-grey-medium));
+      border-color: var(--accent-cyan);
+      box-shadow: var(--glow-cyan);
+      color: #000000;
+      font-weight: 800;
+    }
+
+    .btn-action.success {
+      background: linear-gradient(135deg, var(--accent-green), var(--bg-grey-medium));
+      border-color: var(--accent-green);
+      box-shadow: var(--glow-green);
+      color: #000000;
+      font-weight: 800;
+    }
+
+    .btn-action.disabled {
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    /* FASE 0: ELECCIÓN */
+    .choice-card-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .choice-card {
+      background-color: var(--bg-grey-medium);
+      border: 2px solid var(--bg-grey-light);
+      border-radius: 14px;
+      padding: 12px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .choice-card.correct-selected {
+      border-color: var(--accent-green);
+      background-color: rgba(57, 255, 20, 0.05);
+      box-shadow: var(--glow-green);
+    }
+
+    .choice-card.wrong-selected {
+      border-color: var(--accent-red);
+      background-color: rgba(255, 51, 102, 0.05);
+      box-shadow: var(--glow-red);
+    }
+
+    .choice-card-formula {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--text-high);
+    }
+
+    .choice-card-title {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-medium);
+      text-transform: uppercase;
+    }
+
+    /* FASE 1: EXTRACCIÓN DE DATOS */
+    .extraction-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .extraction-row {
+      display: flex;
+      align-items: center;
+      background: var(--bg-grey-medium);
+      border: 1px solid var(--bg-grey-light);
+      border-radius: 10px;
+      padding: 6px 12px;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .extraction-symbol {
+      font-size: 1rem;
+      font-weight: 800;
+      color: var(--accent-cyan);
+      width: 24px;
+      text-align: center;
+    }
+
+    .extraction-desc {
+      font-size: 0.75rem;
+      color: var(--text-medium);
+      flex: 1;
+      text-align: left;
+    }
+
+    .extraction-slot {
+      width: 65px;
+      height: 28px;
+      border: 1.5px dashed var(--text-low);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 0.9rem;
+      background-color: var(--bg-black);
+      cursor: pointer;
+      color: var(--accent-cyan);
+    }
+
+    .extraction-slot.active-slot {
+      border-color: var(--accent-cyan);
+      background-color: rgba(0, 240, 255, 0.1);
+    }
+
+    .extraction-slot.correct-slot {
+      border-style: solid;
+      border-color: var(--accent-green);
+      color: var(--accent-green);
+    }
+
+    .extraction-slot.wrong-slot {
+      border-style: solid;
+      border-color: var(--accent-red);
+      color: var(--accent-red);
+      animation: shake 0.3s ease;
+    }
+
+    /* FASE 2: HIPÓTESIS */
+    .hypothesis-constructor {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .hypothesis-row {
+      display: flex;
+      align-items: center;
+      background: var(--bg-grey-medium);
+      border: 1px solid var(--bg-grey-light);
+      border-radius: 12px;
+      padding: 8px 12px;
+      gap: 8px;
+    }
+
+    .hyp-label { font-size: 1rem; font-weight: 800; width: 35px; }
+    .hyp-param { font-size: 1rem; font-weight: 600; color: var(--text-medium); }
+    
+    .hyp-slot {
+      flex: 1;
+      height: 38px;
+      border: 2px dashed var(--bg-grey-light);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      background-color: var(--bg-black);
+    }
+
+    .hyp-slot.selected-slot { border-color: var(--accent-cyan); box-shadow: var(--glow-cyan); }
+    .hyp-slot.filled { border-style: solid; border-color: var(--accent-cyan); color: var(--accent-cyan); }
+    .hyp-slot.correct-slot { border-color: var(--accent-green); color: var(--accent-green); }
+    .hyp-slot.wrong-slot { border-color: var(--accent-red); color: var(--accent-red); animation: shake 0.3s ease; }
+
+    .options-pool { margin-top: 8px; }
+    .pool-label { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; color: var(--text-low); margin-bottom: 4px; }
+    .pool-items { display: flex; flex-wrap: wrap; gap: 8px; }
+    
+    .pool-item {
+      background: var(--bg-grey-light);
+      border: 1px solid var(--text-low);
+      color: var(--text-high);
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    /* FASE 3: FÓRMULA */
+    .formula-display {
+      background-color: var(--bg-grey-medium);
+      border: 1px solid var(--bg-grey-light);
+      border-radius: 16px;
+      padding: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .math-formula { display: flex; align-items: center; font-size: 1.4rem; font-weight: 600; }
+    .math-fraction { display: flex; flex-direction: column; align-items: center; margin: 0 6px; }
+    .math-numerator { border-bottom: 2px solid var(--text-high); padding: 0 4px 2px 4px; display: flex; gap: 4px; }
+    .math-denominator { padding: 2px 4px 0 4px; display: flex; align-items: center; }
+
+    .math-slot {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 36px;
+      height: 28px;
+      border: 1.5px dashed var(--text-low);
+      border-radius: 5px;
+      font-size: 0.95rem;
+      font-weight: 800;
+      color: var(--accent-cyan);
+      background-color: rgba(0,0,0,0.3);
+      cursor: pointer;
+    }
+
+    .math-slot.active-slot { border-color: var(--accent-cyan); background-color: rgba(0, 240, 255, 0.1); }
+    .math-slot.correct-slot { border-style: solid; border-color: var(--accent-green); color: var(--accent-green); }
+    .math-slot.wrong-slot { border-style: solid; border-color: var(--accent-red); color: var(--accent-red); animation: shake 0.3s ease; }
+
+    .variables-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    .var-match-card {
+      background-color: var(--bg-grey-medium);
+      border: 1px solid var(--bg-grey-light);
+      border-radius: 10px;
+      padding: 6px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+
+    .var-symbol {
+      font-size: 0.9rem;
+      font-weight: 800;
+      color: var(--accent-cyan);
+      background: var(--bg-black);
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+    }
+
+    .var-desc { font-size: 0.65rem; color: var(--text-medium); flex: 1; padding-left: 6px; }
+    .var-val-bubble { font-size: 0.8rem; font-weight: 800; color: var(--text-high); background: var(--bg-grey-light); padding: 2px 6px; border-radius: 4px; }
+
+    /* FASES 4 Y 5: GRÁFICO */
+    .visual-plot-container {
+      width: 100%;
+      height: 180px;
+      background-color: var(--bg-grey-dark);
+      border: 1px solid var(--bg-grey-light);
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .svg-plot { width: 100%; height: 100%; }
+
+    .plot-overlay-info {
+      position: absolute;
+      bottom: 8px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.65rem;
+      color: var(--text-medium);
+      pointer-events: none;
+    }
+
+    /* PESTAÑAS DESLIZABLES (SIDE DRAWERS) */
+    .drawer {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 280px;
+      height: 100%;
+      background: rgba(18, 18, 18, 0.98);
+      border-left: 1px solid var(--bg-grey-light);
+      z-index: 100;
+      padding: 16px;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: -10px 0 30px rgba(0,0,0,0.8);
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .drawer.open {
+      transform: translateX(0);
+    }
+
+    .drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: 8px;
+    }
+
+    .drawer-title {
+      font-size: 0.9rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--accent-cyan);
+    }
+
+    .btn-close-drawer {
+      background: none;
+      border: none;
+      color: var(--text-medium);
+      cursor: pointer;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    .drawer-content {
+      font-size: 0.85rem;
+      line-height: 1.4;
+      color: var(--text-medium);
+    }
+
+    .formula-ref-item {
+      margin-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding-bottom: 8px;
+    }
+
+    .formula-ref-math {
+      font-size: 1.1rem;
+      color: var(--text-high);
+      font-weight: bold;
+      margin-bottom: 2px;
+    }
+
+    /* VICTORY */
+    .success-icon-container { display: flex; justify-content: center; margin: 10px 0; }
+    .success-ring {
+      width: 60px; height: 60px; border-radius: 50%; border: 3px solid var(--accent-green);
+      display: flex; align-items: center; justify-content: center; box-shadow: var(--glow-green);
+    }
+    .success-ring svg { width: 30px; height: 30px; fill: var(--accent-green); }
+    .summary-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+    .summary-item {
+      background: var(--bg-grey-medium); border: 1px solid var(--bg-grey-light);
+      border-radius: 10px; padding: 6px 12px; display: flex; align-items: center; gap: 8px; font-size: 0.8rem;
+    }
+    .summary-badge {
+      background: var(--bg-black); color: var(--accent-cyan); font-weight: 800;
+      padding: 1px 6px; border-radius: 4px; font-size: 0.7rem;
+    }
+
+    /* ANIMACIONES */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      75% { transform: translateX(4px); }
+    }
+
+    /* ESTILOS DE TABLA ESTADÍSTICA INTERACTIVA */
+    .interactive-stat-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 6px;
+      font-size: 0.72rem;
+      background-color: var(--bg-grey-medium);
+      border: 1px solid var(--bg-grey-light);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .interactive-stat-table th {
+      background-color: rgba(0, 0, 0, 0.5);
+      color: var(--text-medium);
+      padding: 6px 4px;
+      font-weight: 600;
+      font-size: 0.65rem;
+      border-bottom: 1px solid var(--bg-grey-light);
+    }
+    .interactive-stat-table td {
+      padding: 6px 4px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      text-align: center;
+    }
+    .table-cell-val {
+      cursor: pointer;
+      font-weight: bold;
+      color: var(--text-high);
+      transition: all 0.2s ease;
+      border-radius: 4px;
+    }
+    .table-cell-val:hover {
+      background-color: rgba(0, 240, 255, 0.15);
+      color: var(--accent-cyan);
+      box-shadow: 0 0 5px rgba(0, 240, 255, 0.2);
+    }
+    .table-cell-val.correct-cell {
+      background-color: rgba(57, 255, 20, 0.2) !important;
+      color: var(--accent-green) !important;
+      box-shadow: var(--glow-green);
+      border: 1px solid var(--accent-green);
+    }
+    .table-cell-val.wrong-cell {
+      background-color: rgba(255, 51, 102, 0.2) !important;
+      color: var(--accent-red) !important;
+      box-shadow: var(--glow-red);
+      border: 1px solid var(--accent-red);
+      animation: shake 0.3s ease;
+    }
+    .table-scroll-container {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid var(--bg-grey-light);
+      border-radius: 8px;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container">
+    
+    <!-- HEADER -->
+    <header class="app-header">
+      <h1>Estadística</h1>
+      <div class="header-controls">
+        <button class="btn-header-tool" onclick="toggleDrawer('drawer-problem')">
+          📖 Ver Problema
+        </button>
+        <button class="btn-header-tool" onclick="toggleDrawer('drawer-formulas')">
+          🧮 Fórmulas
+        </button>
+        <button class="btn-header-tool" onclick="autoCompleteCurrentPhase()" style="border-color: var(--accent-purple); color: var(--text-high); box-shadow: 0 0 5px rgba(189, 0, 255, 0.3);">
+          🪄 Auto-completar
+        </button>
+        <button class="btn-header-tool" onclick="skipToNextExercise()" style="border-color: var(--accent-cyan);">
+          ⏭️ Siguiente Ejercicio
+        </button>
+        <span class="exercise-badge" id="ex-number">Ej. 1/25</span>
+        <span class="step-indicator" id="step-number">Paso 1/6</span>
+      </div>
+    </header>
+
+    <!-- BARRA DE PROGRESO -->
+    <div class="progress-bar-container">
+      <div class="progress-bar-fill" id="progress-fill"></div>
+    </div>
+
+    <!-- PANTALLAS DE LAS FASES -->
+    <div class="phases-viewport">
+
+      <!-- FASE 0: SOLO ENUNCIADO Y SELECCIÓN DE DISTRIBUCIÓN -->
+      <section class="phase-screen active" id="phase-0">
+        <div class="phase-col-left" style="grid-column: span 2; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <h2 class="intro-title" id="ex-title">El Problema de Tiempos</h2>
+            <p class="intro-subtitle" id="ex-text-0" style="font-size: 1rem; color: var(--text-high); line-height: 1.5;"></p>
+          </div>
+
+          <div style="margin-top: 15px;">
+            <h3 style="font-size: 0.85rem; text-transform: uppercase; color: var(--text-medium); margin-bottom: 8px; text-align: center;">¿Qué distribución estadística corresponde usar?</h3>
+            <div class="choice-card-container" style="max-width: 400px; margin: 0 auto 10px auto;">
+              <div class="choice-card" id="choice-z" onclick="selectDistribution('Z')">
+                <div class="choice-card-formula">Z</div>
+                <div class="choice-card-title">Normal</div>
+              </div>
+              <div class="choice-card" id="choice-t" onclick="selectDistribution('T')">
+                <div class="choice-card-formula">t</div>
+                <div class="choice-card-title">t-Student</div>
+              </div>
+            </div>
+
+            <div id="dist-feedback" class="info-card" style="display: none; padding: 10px; max-width: 500px; margin: 0 auto 10px auto;">
+              <div class="info-card-title" id="dist-feedback-title" style="font-size:0.65rem;">Resultado</div>
+              <div class="info-card-text" id="dist-feedback-text" style="font-size:0.75rem;"></div>
+            </div>
+            
+            <div style="display: flex; justify-content: center;">
+              <button class="btn-action primary disabled" id="btn-next-0" onclick="goToPhase(1)" style="min-width: 200px;">
+                Iniciar Extracción (Paso 1)
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FASE 1: EXTRACCIÓN DE DATOS HACIENDO CLIC EN EL TEXTO -->
+      <section class="phase-screen" id="phase-1">
+        <div class="phase-col-left">
+          <div>
+            <h2 class="intro-title">Paso 1: Extracción de Datos</h2>
+            <p class="intro-subtitle" style="margin-bottom: 8px;">Pulsa sobre una casilla de la tabla de la derecha y luego selecciona su valor correcto del listado de botones de abajo.</p>
+
+            <div class="clickable-problem-text" id="ex-text-clickable-1" style="margin-bottom: 12px; font-weight: 400; color: var(--text-high);">
+              <!-- Cargado dinámicamente -->
+            </div>
+
+            <div class="options-pool" style="margin-top: 15px;">
+              <div class="pool-label" id="pool-label-ext-text">Selecciona una casilla y pulsa su valor:</div>
+              <div class="pool-items" id="pool-items-ext-container"></div>
+            </div>
+          </div>
+
+          <div class="button-group" style="display: flex; gap: 8px;">
+            <button class="btn-action" onclick="goToPhase(0)" style="flex: 1; padding: 10px; font-size: 0.8rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: scaleX(-1);"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              Volver
+            </button>
+            <button class="btn-action primary disabled" id="btn-next-1" onclick="goToPhase(2)" style="flex: 1.5; padding: 10px; font-size: 0.8rem;">
+              Continuar al Paso 2
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="phase-col-right">
+          <div class="extraction-grid">
+            <div class="extraction-row">
+              <span class="extraction-symbol">μ₀</span>
+              <span class="extraction-desc">Media histórica (esperada)</span>
+              <div class="extraction-slot" id="slot-ext-mu0" onclick="setActiveExtSlot('mu0')">?</div>
+            </div>
+            <div class="extraction-row">
+              <span class="extraction-symbol" id="label-ext-dev">σ</span>
+              <span class="extraction-desc" id="desc-ext-dev">Desv. estándar</span>
+              <div class="extraction-slot" id="slot-ext-sigma" onclick="setActiveExtSlot('sigma')">?</div>
+            </div>
+            <div class="extraction-row">
+              <span class="extraction-symbol">n</span>
+              <span class="extraction-desc">Tamaño de la muestra</span>
+              <div class="extraction-slot" id="slot-ext-n" onclick="setActiveExtSlot('n')">?</div>
+            </div>
+            <div class="extraction-row">
+              <span class="extraction-symbol">x̄</span>
+              <span class="extraction-desc">Media observada</span>
+              <div class="extraction-slot" id="slot-ext-xbar" onclick="setActiveExtSlot('xbar')">?</div>
+            </div>
+          </div>
+          
+          <div id="ext-feedback" class="info-card green" style="display: none; margin-top: 10px; padding: 8px;">
+            <div class="info-card-text" id="ext-feedback-text" style="font-size: 0.75rem;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FASE 2: PLANTEAMIENTO DE HIPÓTESIS -->
+      <section class="phase-screen" id="phase-2">
+        <div class="phase-col-left">
+          <div>
+            <h2 class="intro-title">Paso 2: Planteamiento</h2>
+            <p class="intro-subtitle" id="hyp-subtitle-text">Completa el espacio nulo e hipótesis alternativa según la dirección esperada.</p>
+
+            <div class="hypothesis-constructor">
+              <div class="hypothesis-row">
+                <div class="hyp-label">H₀</div>
+                <div class="hyp-param">μ</div>
+                <div class="hyp-slot" id="slot-h0-op" onclick="setActiveHypSlot('h0-op')">?</div>
+                <div class="hyp-slot" id="slot-h0-val" onclick="setActiveHypSlot('h0-val')">?</div>
+              </div>
+
+              <div class="hypothesis-row">
+                <div class="hyp-label">H₁</div>
+                <div class="hyp-param">μ</div>
+                <div class="hyp-slot" id="slot-h1-op" onclick="setActiveHypSlot('h1-op')">?</div>
+                <div class="hyp-slot" id="slot-h1-val" onclick="setActiveHypSlot('h1-val')">?</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="button-group" style="display: flex; gap: 8px;">
+            <button class="btn-action" onclick="goToPhase(1)" style="flex: 1; padding: 10px; font-size: 0.8rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: scaleX(-1);"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              Volver
+            </button>
+            <button class="btn-action primary disabled" id="btn-next-2" onclick="goToPhase(3)" style="flex: 1.5; padding: 10px; font-size: 0.8rem;">
+              Continuar al Paso 3
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="phase-col-right">
+          <div class="options-pool">
+            <div class="pool-label" id="pool-label-text">Selecciona un espacio y elige:</div>
+            <div class="pool-items" id="pool-items-container"></div>
+          </div>
+
+          <div id="hyp-feedback" class="info-card green" style="display: none; margin-top: 10px; padding: 10px;">
+            <div class="info-card-title">Correcto</div>
+            <div class="info-card-text" id="hyp-feedback-text" style="font-size: 0.75rem;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FASE 3: SUSTITUCIÓN FÓRMULA (CON DESVIACIÓN PRE-RELLENADA Y POOL DE VALORES) -->
+      <section class="phase-screen" id="phase-3">
+        <div class="phase-col-left">
+          <div>
+            <h2 class="intro-title">Paso 3: Estadístico</h2>
+            <p class="intro-subtitle">Completa la fórmula seleccionando las variables del problema. La desviación típica ha sido calculada previamente.</p>
+
+            <div class="formula-display">
+              <div class="math-formula">
+                <span id="formula-var-name">Z =</span>
+                <div class="math-fraction">
+                  <div class="math-numerator">
+                    <div class="math-slot" id="slot-f-xbar" onclick="setActiveMathSlot('xbar')">x̄</div>
+                    <span>-</span>
+                    <div class="math-slot" id="slot-f-mu0" onclick="setActiveMathSlot('mu0')">μ₀</div>
+                  </div>
+                  <div class="math-denominator">
+                    <div class="math-slot correct-slot filled" id="slot-f-sigma" style="cursor: default; pointer-events: none;">σ</div>
+                    <span>/ √</span>
+                    <div class="math-slot" id="slot-f-n" onclick="setActiveMathSlot('n')">n</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="button-group" style="display: flex; gap: 8px;">
+            <button class="btn-action" onclick="goToPhase(2)" style="flex: 1; padding: 10px; font-size: 0.8rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: scaleX(-1);"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              Volver
+            </button>
+            <button class="btn-action primary disabled" id="btn-next-3" onclick="goToPhase(4)" style="flex: 1.5; padding: 10px; font-size: 0.8rem;">
+              Continuar al Paso 4
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="phase-col-right">
+          <div class="options-pool">
+            <div class="pool-label" id="pool-label-formula-text">Selecciona un campo en la fórmula y pulsa su valor:</div>
+            <div class="pool-items" id="pool-items-formula-container"></div>
+          </div>
+          <div id="param-feedback" class="info-card green" style="display: none; margin-top: 8px; padding: 8px;">
+            <div class="info-card-text" id="param-feedback-text" style="font-size:0.75rem;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FASE 4: BÚSQUEDA DEL P-VALOR EN LA TABLA (NUEVO) -->
+      <section class="phase-screen" id="phase-4">
+        <div class="phase-col-left">
+          <div>
+            <h2 class="intro-title">Paso 4: Buscar P-Valor en Tabla</h2>
+            <p class="intro-subtitle">Utiliza el estadístico observado calculado para buscar su probabilidad acumulada correspondiente en la tabla.</p>
+
+            <div class="info-card" style="margin-bottom: 8px; padding: 10px;">
+              <div class="info-card-title">Estadístico Observado</div>
+              <div class="info-card-text" id="p-lookup-calc-val" style="font-size: 0.9rem; font-weight: bold; color: var(--accent-cyan);"></div>
+            </div>
+
+            <div class="info-card" style="margin-bottom: 8px; padding: 10px;">
+              <div class="info-card-title">Probabilidad Acumulada del Estadístico</div>
+              <div style="font-size: 0.85rem; display: flex; align-items: center; gap: 6px; margin-top: 4px; flex-wrap: wrap;">
+                <span id="p-lookup-label" style="font-weight: 600;"></span>
+                <div class="math-slot" id="slot-p-lookup-val" style="cursor: default;">?</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="button-group" style="display: flex; gap: 8px;">
+            <button class="btn-action" onclick="goToPhase(3)" style="flex: 1; padding: 10px; font-size: 0.8rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: scaleX(-1);"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              Volver
+            </button>
+            <button class="btn-action primary disabled" id="btn-next-4" onclick="goToPhase(5)" style="flex: 1.5; padding: 10px; font-size: 0.8rem;">
+              Continuar al Paso 5
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="phase-col-right" style="display: flex; flex-direction: column; gap: 8px;">
+          <div class="info-card" style="margin-top: 0;">
+            <div class="info-card-title">Tabla Estadística - Haz clic en el valor correcto:</div>
+            <div id="p-lookup-table-content"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FASE 5: TIPO DE CONTRASTE Y SIGNIFICACIÓN (ANTERIOR FASE 4) -->
+      <section class="phase-screen" id="phase-5">
+        <div class="phase-col-left">
+          <div>
+            <h2 class="intro-title">Paso 5: Contraste y Significación</h2>
+            <p class="intro-subtitle">Decide si el contraste es unilateral (izquierdo/derecho) o bilateral, y selecciona el nivel de significación del contraste.</p>
+
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 10px;">
+              <div>
+                <span style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--text-low);">Tipo de Contraste:</span>
+                <div class="choice-card-container" style="grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 4px;">
+                  <div class="choice-card" id="choice-dir-left" onclick="selectContrastDir('left')">
+                    <div class="choice-card-formula" style="font-size:1.1rem; font-weight:600;">Unilateral Izq.</div>
+                    <div class="choice-card-title" style="font-size:0.6rem;">μ &lt; μ₀</div>
+                  </div>
+                  <div class="choice-card" id="choice-dir-right" onclick="selectContrastDir('right')">
+                    <div class="choice-card-formula" style="font-size:1.1rem; font-weight:600;">Unilateral Der.</div>
+                    <div class="choice-card-title" style="font-size:0.6rem;">μ &gt; μ₀</div>
+                  </div>
+                  <div class="choice-card" id="choice-dir-two" onclick="selectContrastDir('two-tailed')">
+                    <div class="choice-card-formula" style="font-size:1.1rem; font-weight:600;">Bilateral</div>
+                    <div class="choice-card-title" style="font-size:0.6rem;">μ ≠ μ₀</div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <span style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--text-low);">Nivel de Significación (α):</span>
+                <div class="choice-card-container" style="grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; max-width: 250px;">
+                  <div class="choice-card" id="choice-alpha-05" onclick="selectAlpha('0.05')">
+                    <div class="choice-card-formula" style="font-size:1.2rem; font-weight:600;">0.05</div>
+                    <div class="choice-card-title" style="font-size:0.6rem;">5% significación</div>
+                  </div>
+                  <div class="choice-card" id="choice-alpha-01" onclick="selectAlpha('0.01')">
+                    <div class="choice-card-formula" style="font-size:1.2rem; font-weight:600;">0.01</div>
+                    <div class="choice-card-title" style="font-size:0.6rem;">1% significación</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="button-group" style="display: flex; gap: 8px;">
+            <button class="btn-action" onclick="goToPhase(4)" style="flex: 1; padding: 10px; font-size: 0.8rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: scaleX(-1);"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              Volver
+            </button>
+            <button class="btn-action primary disabled" id="btn-next-5" onclick="goToPhase(6)" style="flex: 1.5; padding: 10px; font-size: 0.8rem;">
+              Continuar al Paso 6
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="phase-col-right">
+          <div id="contrast-feedback" class="info-card" style="display: none; padding: 12px;">
+            <div class="info-card-title" id="contrast-feedback-title">Feedback</div>
+            <div class="info-card-text" id="contrast-feedback-text" style="font-size: 0.8rem;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FASE 6: REGIÓN DE RECHAZO (ANTERIOR FASE 5) -->
+      <section class="phase-screen" id="phase-6">
+        <div class="phase-col-left">
+          <div>
+            <h2 class="intro-title">Paso 6: Región Crítica</h2>
+            <p class="intro-subtitle" id="region-subtitle-text">El nivel de significación fijado es <span class="highlight-cyan">α = 0.05</span>.</p>
+
+            <div class="info-card red">
+              <div class="info-card-title">Criterio de Falsación</div>
+              <div class="info-card-text" id="region-crit-text" style="font-size: 0.8rem;"></div>
+            </div>
+
+            <div class="info-card" style="margin-top: 8px;">
+              <div class="info-card-title">Valor Crítico del Contraste</div>
+              <div style="font-size: 0.85rem; display: flex; align-items: center; gap: 6px; margin-top: 4px; flex-wrap: wrap;">
+                <span id="region-crit-label" style="font-weight: 600;"></span>
+                <div class="math-slot" id="slot-crit-val" style="cursor: default;">?</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="button-group" style="display: flex; gap: 8px;">
+            <button class="btn-action" onclick="goToPhase(5)" style="flex: 1; padding: 10px; font-size: 0.8rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: scaleX(-1);"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              Volver
+            </button>
+            <button class="btn-action primary disabled" id="btn-next-6" onclick="goToPhase(7)" style="flex: 1.5; padding: 10px; font-size: 0.8rem;">
+              Continuar al Paso 7
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="phase-col-right" style="display: flex; flex-direction: column; gap: 8px;">
+          <div class="visual-plot-container">
+            <svg class="svg-plot" id="normal-curve-svg-6" viewBox="0 0 400 200">
+              <path d="" id="curve-bg-path-6" fill="none" stroke="#27272a" stroke-width="2"></path>
+              <!-- Zona crítica coloreada (puede ser 1 o 2 colas) -->
+              <path d="" id="critical-zone-path-6" fill="rgba(255, 51, 102, 0.25)" stroke="var(--accent-red)" stroke-width="1.5"></path>
+              <path d="" id="critical-zone-right-path-6" fill="rgba(255, 51, 102, 0.25)" stroke="var(--accent-red)" stroke-width="1.5" style="display:none;"></path>
+              
+              <line x1="0" y1="0" x2="0" y2="200" id="critical-threshold-line-6" stroke="var(--accent-red)" stroke-width="2" stroke-dasharray="3 3"></line>
+              <line x1="0" y1="0" x2="0" y2="200" id="critical-threshold-right-line-6" stroke="var(--accent-red)" stroke-width="2" stroke-dasharray="3 3" style="display:none;"></line>
+              <line x1="10" y1="170" x2="390" y2="170" stroke="#71717a" stroke-width="1"></line>
+            </svg>
+            <div class="plot-overlay-info" id="plot-overlay-info-6">
+              <!-- Dinámico -->
+            </div>
+          </div>
+
+          <div class="info-card" id="crit-table-card" style="margin-top: 0;">
+            <div class="info-card-title">Tabla de Referencia - Haz clic en el valor correcto:</div>
+            <div id="crit-table-content"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FASE 7: CÁCULOS Y P-VALOR (ANTERIOR FASE 6) -->
+      <section class="phase-screen" id="phase-7">
+        <div class="phase-col-left">
+          <div>
+            <h2 class="intro-title">Paso 7: Estadístico Observado</h2>
+            <p class="intro-subtitle" id="calc-subtitle-text"></p>
+
+            <div class="info-card" style="margin-bottom: 8px;">
+              <div class="info-card-text" id="calc-formula-math" style="font-size: 0.8rem;"></div>
+            </div>
+
+            <div class="info-card" style="margin-bottom: 8px;">
+              <div class="info-card-title">Cálculo del p-valor</div>
+              <div class="info-card-text" id="p-formula-container" style="font-size: 0.85rem; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-top: 4px;">
+                <!-- Rellenado dinámicamente -->
+              </div>
+            </div>
+
+            <div class="options-pool" style="margin-top: 8px;">
+              <div class="pool-label" id="pool-label-p-text">Completa la probabilidad del p-valor:</div>
+              <div class="pool-items" id="pool-items-p-container"></div>
+            </div>
+          </div>
+
+          <div class="button-group" style="display: flex; gap: 8px;">
+            <button class="btn-action" onclick="goToPhase(6)" style="flex: 1; padding: 10px; font-size: 0.8rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: scaleX(-1);"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              Volver
+            </button>
+            <button class="btn-action primary disabled" id="btn-next-7" onclick="goToPhase(8)" style="flex: 1.5; padding: 10px; font-size: 0.8rem;">
+              Paso 8: Veredicto Final
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="phase-col-right">
+          <div class="visual-plot-container">
+            <svg class="svg-plot" id="normal-curve-svg-7" viewBox="0 0 400 200">
+              <path d="" id="curve-bg-path-7" fill="none" stroke="#27272a" stroke-width="2"></path>
+              <path d="" id="critical-zone-path-7" fill="rgba(255, 51, 102, 0.1)" stroke="rgba(255, 51, 102, 0.3)" stroke-width="1"></path>
+              <path d="" id="critical-zone-right-path-7" fill="rgba(255, 51, 102, 0.1)" stroke="rgba(255, 51, 102, 0.3)" stroke-width="1" style="display:none;"></path>
+              
+              <path d="" id="p-value-path-7" fill="rgba(0, 240, 255, 0.3)" stroke="var(--accent-cyan)" stroke-width="1.5"></path>
+              <path d="" id="p-value-right-path-7" fill="rgba(0, 240, 255, 0.3)" stroke="var(--accent-cyan)" stroke-width="1.5" style="display:none;"></path>
+              
+              <line x1="0" y1="0" x2="0" y2="200" id="z-calc-line-7" stroke="var(--accent-cyan)" stroke-width="2"></line>
+              <line x1="0" y1="0" x2="0" y2="200" id="z-calc-right-line-7" stroke="var(--accent-cyan)" stroke-width="2" style="display:none;"></line>
+              
+              <line x1="0" y1="0" x2="0" y2="200" id="critical-threshold-line-7" stroke="var(--accent-red)" stroke-width="2" stroke-dasharray="3 3"></line>
+              <line x1="0" y1="0" x2="0" y2="200" id="critical-threshold-right-line-7" stroke="var(--accent-red)" stroke-width="2" stroke-dasharray="3 3" style="display:none;"></line>
+              <circle cx="0" cy="0" r="5" id="z-calc-dot-7" fill="var(--accent-cyan)"></circle>
+              <circle cx="0" cy="0" r="5" id="z-calc-right-dot-7" fill="var(--accent-cyan)" style="display:none;"></circle>
+              <line x1="10" y1="170" x2="390" y2="170" stroke="#71717a" stroke-width="1"></line>
+            </svg>
+            <div class="plot-overlay-info" id="plot-overlay-info-7">
+              <!-- Dinámico -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FASE 8: VEREDICTO (ANTERIOR FASE 7) -->
+      <section class="phase-screen" id="phase-8">
+        <div class="phase-col-left">
+          <div>
+            <h2 class="intro-title">Paso 8: Inferencia y Veredicto</h2>
+            <p class="intro-subtitle" style="margin-bottom: 6px;">Asocia los valores críticos a los intervalos, determina la pertenencia de tu estadístico y toma la decisión.</p>
+
+            <!-- DATOS CALCULADOS DE REFERENCIA -->
+            <div class="info-card" style="margin-bottom: 6px; padding: 10px;">
+              <div class="info-card-title" style="font-size:0.65rem;">Datos Calculados de Referencia</div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 0.8rem; margin-top: 4px;">
+                <div>• Estadístico Calculado: <span class="highlight-cyan" id="dec-calc-stat-val"></span></div>
+                <div>• Valor Crítico: <span class="highlight-red" id="dec-crit-stat-val"></span></div>
+                <div>• Nivel de Significación (α): <span class="highlight-green">0.05</span></div>
+                <div>• p-valor obtenido: <span class="highlight-cyan" id="dec-p-val-ref"></span></div>
+              </div>
+            </div>
+
+            <!-- INTERVAL CONSTRUCTOR -->
+            <div class="info-card" style="margin-bottom: 6px; padding: 8px;">
+              <div class="info-card-title" style="font-size:0.65rem;">Intervalos de la Región de Aceptación (Retención) de H₀ y Región Crítica</div>
+              <div style="font-size: 0.8rem; display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span>Región de Aceptación:</span>
+                  <span id="dec-interval-acceptance" style="font-weight: bold; color: var(--accent-cyan); display: flex; align-items: center; gap: 4px;"></span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span>Región Crítica:</span>
+                  <span id="dec-interval-critical" style="font-weight: bold; color: var(--accent-red); display: flex; align-items: center; gap: 4px;"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- MEMBERSHIP SELECTOR -->
+            <div id="dec-membership-container" style="display: none; margin-bottom: 6px;">
+              <span style="font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--text-low);">Ubicación del Estadístico:</span>
+              <div class="choice-card-container" style="grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px;">
+                <div class="choice-card" id="choice-member-accept" onclick="selectMembership('acceptance')">
+                  <div class="choice-card-formula" style="font-size: 0.9rem; font-weight: 600;">Región Aceptación</div>
+                  <div class="choice-card-title" style="font-size: 0.55rem;">Retener H₀</div>
+                </div>
+                <div class="choice-card" id="choice-member-reject" onclick="selectMembership('critical')">
+                  <div class="choice-card-formula" style="font-size: 0.9rem; font-weight: 600;">Región Crítica</div>
+                  <div class="choice-card-title" style="font-size: 0.55rem;">Rechazar H₀</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- DECISION BUTTONS -->
+            <div id="dec-buttons-container" style="display: none; gap: 10px; margin-bottom: 6px;">
+              <button class="btn-action" id="decision-reject" onclick="makeFinalDecision(true)" style="flex: 1; padding: 8px 12px; font-size: 0.85rem;">
+                Rechazar H₀
+              </button>
+              <button class="btn-action" id="decision-accept" onclick="makeFinalDecision(false)" style="flex: 1; padding: 8px 12px; font-size: 0.85rem;">
+                No Rechazar H₀
+              </button>
+            </div>
+          </div>
+
+          <div class="button-group" style="display: flex; gap: 8px;">
+            <button class="btn-action" onclick="goToPhase(7)" style="flex: 1; padding: 10px; font-size: 0.8rem;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: scaleX(-1);"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+              Volver
+            </button>
+            <button class="btn-action success disabled" id="btn-next-8" onclick="goToVictory()" style="flex: 1.5; padding: 10px; font-size: 0.8rem;">
+              Finalizar Ejercicio
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="phase-col-right">
+          <div class="options-pool" id="dec-pool-container-wrapper" style="margin-bottom: 8px;">
+            <div class="pool-label" id="pool-label-dec-text">Completa los límites del intervalo:</div>
+            <div class="pool-items" id="pool-items-dec-container"></div>
+          </div>
+
+          <div id="decision-feedback" class="info-card" style="display: none; padding: 10px; margin-top: 0;">
+            <div class="info-card-title" id="decision-feedback-title">Veredicto</div>
+            <div class="info-card-text" id="decision-feedback-text" style="font-size: 0.75rem; line-height: 1.3;"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- VICTORY / RESUMEN -->
+      <section class="phase-screen" id="phase-victory" style="grid-template-columns: 1fr;">
+        <div style="text-align: center; display: flex; flex-direction: column; justify-content: center; height: 100%;">
+          <div class="success-icon-container">
+            <div class="success-ring">
+              <svg viewBox="0 0 24 24">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+              </svg>
+            </div>
+          </div>
+          
+          <h2 class="intro-title" style="font-size: 1.5rem; background: linear-gradient(135deg, var(--accent-green), var(--accent-cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 5px;">¡Contraste Completado!</h2>
+          
+          <div class="summary-list" style="max-width: 500px; margin: 5px auto;">
+            <div class="summary-item">
+              <span class="summary-badge">H₀ vs H₁</span>
+              <div style="color: var(--text-medium);" id="victory-hyp-text"></div>
+            </div>
+            <div class="summary-item">
+              <span class="summary-badge">Resultado</span>
+              <div style="color: var(--accent-green); font-weight: bold;" id="victory-verdict-text"></div>
+            </div>
+          </div>
+          
+          <div class="button-group" style="max-width: 250px; margin: 12px auto 0 auto;">
+            <button class="btn-action success" onclick="skipToNextExercise()">
+              Cargar Siguiente Ejercicio
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <!-- PESTAÑA: PROBLEMA -->
+    <div class="drawer" id="drawer-problem">
+      <div class="drawer-header">
+        <span class="drawer-title">Enunciado del Problema</span>
+        <button class="btn-close-drawer" onclick="toggleDrawer('drawer-problem')">&times;</button>
+      </div>
+      <div class="drawer-content" id="drawer-problem-content"></div>
+    </div>
+
+    <!-- PESTAÑA: FORMULARIO -->
+    <div class="drawer" id="drawer-formulas">
+      <div class="drawer-header">
+        <span class="drawer-title">Formulas e Inferencia</span>
+        <button class="btn-close-drawer" onclick="toggleDrawer('drawer-formulas')">&times;</button>
+      </div>
+      <div class="drawer-content" id="drawer-formulas-content">
+        <!-- Rellenado dinámicamente según distribución -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MathJax / KaTeX Fallback & Rendering -->
+  <script>
+    const linkKaTeX = document.createElement('link');
+    linkKaTeX.rel = 'stylesheet';
+    linkKaTeX.href = 'https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css';
+    document.head.appendChild(linkKaTeX);
+
+    const scriptKaTeX = document.createElement('script');
+    scriptKaTeX.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js';
+    scriptKaTeX.onload = () => {
+      const scriptKaTeXAuto = document.createElement('script');
+      scriptKaTeXAuto.src = 'https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js';
+      scriptKaTeXAuto.onload = () => {
+        window.katexLoaded = true;
+        triggerMathRender();
+      };
+      document.head.appendChild(scriptKaTeXAuto);
+    };
+    document.head.appendChild(scriptKaTeX);
+
+    function triggerMathRender() {
+      if (window.katexLoaded && window.renderMathInElement) {
+        renderMathInElement(document.body, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '$', right: '$', display: false}
+          ],
+          throwOnError : false
+        });
+      }
+    }
+  </script>
+
+  <!-- BASE DE DATOS DE 25 EJERCICIOS Y LÓGICA DE CONTROL -->
+  <script>
+    const EXERCISES_DATABASE = [
+      {
+        id: 1,
+        title: "Tiempos de Espera (Hospital)",
+        text: "Un hospital implementó un nuevo software para agilizar la atención médica de urgencias. Históricamente, el tiempo de espera promedio de los pacientes era de 15 minutos con una varianza conocida de 16. Se extrae una muestra aleatoria de 64 pacientes, arrojando una media de espera de 13.75 minutos.",
+        clickableText: "Un hospital implementó un nuevo software para agilizar la atención médica de urgencias. Históricamente, el tiempo de espera promedio de los pacientes era de <button class=\"clickable-data\" onclick=\"clickTextData('15')\">15</button> minutos con una varianza conocida de <button class=\"clickable-data\" onclick=\"clickTextData('16')\">16</button>. Se extrae una muestra aleatoria de <button class=\"clickable-data\" onclick=\"clickTextData('64')\">64</button> pacientes, arrojando una media de espera de <button class=\"clickable-data\" onclick=\"clickTextData('13.75')\">13.75</button> minutos.",
+        mu0: "15",
+        sigma2: "16",
+        sigma: "4",
+        n: "64",
+        xbar: "13.75",
+        direction: "left", // unilateral izquierdo
+        dist: "Z",
+        targetVarLabel: "σ²",
+        targetDevLabel: "σ",
+        zCalc: -2.50,
+        zCrit: -1.645,
+        pValue: 0.0062,
+        claim: "reducción del tiempo",
+        rejectMessage: "El nuevo software reduce significativamente el tiempo de espera."
+      },
+      {
+        id: 2,
+        title: "Duración de Baterías (Laptop)",
+        text: "Un fabricante afirma que sus baterías de laptop duran en promedio 8 horas. Un departamento técnico evalúa una muestra de 100 laptops sospechando que duran menos, y reporta una media de 7.6 horas con una desviación estándar muestral S de 2.",
+        clickableText: "Un fabricante afirma que sus baterías de laptop duran en promedio <button class=\"clickable-data\" onclick=\"clickTextData('8')\">8</button> horas. Un departamento técnico evalúa una muestra de <button class=\"clickable-data\" onclick=\"clickTextData('100')\">100</button> laptops sospechando que duran menos, y reporta una media de <button class=\"clickable-data\" onclick=\"clickTextData('7.6')\">7.6</button> horas con una desviación estándar muestral S de <button class=\"clickable-data\" onclick=\"clickTextData('2')\">2</button>.",
+        mu0: "8",
+        sigma2: "4",
+        sigma: "2",
+        n: "100",
+        xbar: "7.6",
+        direction: "left",
+        dist: "T",
+        targetVarLabel: "S²",
+        targetDevLabel: "S",
+        zCalc: -2.00,
+        zCrit: -1.66, 
+        pValue: 0.024,
+        claim: "menor duración de batería",
+        rejectMessage: "La duración promedio es significativamente menor a 8 horas."
+      },
+      {
+        id: 3,
+        title: "Llenado de Paquetes (Café)",
+        text: "Una envasadora automatizada debe llenar paquetes de café con un peso promedio de 500 gramos. Para controlar la calibración, se mide una muestra de 25 paquetes y se obtiene un peso medio de 505 gramos con una desviación típica de la población conocida de 10.",
+        clickableText: "Una envasadora automatizada debe llenar paquetes de café con un peso promedio de <button class=\"clickable-data\" onclick=\"clickTextData('500')\">500</button> gramos. Para controlar la calibración, se mide una muestra de <button class=\"clickable-data\" onclick=\"clickTextData('25')\">25</button> paquetes y se obtiene un peso medio de <button class=\"clickable-data\" onclick=\"clickTextData('505')\">505</button> gramos con una desviación típica de la población conocida de <button class=\"clickable-data\" onclick=\"clickTextData('10')\">10</button>.",
+        mu0: "500",
+        sigma2: "100", // derivado
+        sigma: "10",
+        n: "25",
+        xbar: "505",
+        direction: "two-tailed", // bilateral (descalibración)
+        dist: "Z",
+        targetVarLabel: "σ²",
+        targetDevLabel: "σ",
+        zCalc: 2.50,
+        zCrit: 1.96, // bilateral
+        pValue: 0.0124,
+        claim: "descalibración (cambio de peso)",
+        rejectMessage: "La envasadora está descalibrada (el peso difiere significativamente de 500g)."
+      },
+      {
+        id: 4,
+        title: "Resistencia de Cables (Construcción)",
+        text: "Un nuevo proceso de fundición promete aumentar la resistencia a la tensión de cables de acero, cuyo valor histórico es de 80 kN. Se testea una muestra de 36 cables obteniéndose una media de 83 kN y una varianza conocida de 81.",
+        clickableText: "Un nuevo proceso de fundición promete aumentar la resistencia a la tensión de cables de acero, cuyo valor histórico es de <button class=\"clickable-data\" onclick=\"clickTextData('80')\">80</button> kN. Se testea una muestra de <button class=\"clickable-data\" onclick=\"clickTextData('36')\">36</button> cables obteniéndose una media de <button class=\"clickable-data\" onclick=\"clickTextData('83')\">83</button> kN y una varianza conocida de <button class=\"clickable-data\" onclick=\"clickTextData('81')\">81</button>.",
+        mu0: "80",
+        sigma2: "81",
+        sigma: "9",
+        n: "36",
+        xbar: "83",
+        direction: "right", // unilateral derecho
+        dist: "Z",
+        targetVarLabel: "σ²",
+        targetDevLabel: "σ",
+        zCalc: 2.00,
+        zCrit: 1.645,
+        pValue: 0.0228,
+        claim: "aumento de la resistencia",
+        rejectMessage: "El nuevo proceso aumenta significativamente la resistencia de los cables."
+      },
+      {
+        id: 5,
+        title: "Puntaje en Examen de Aptitud",
+        text: "La media histórica de un examen de aptitud nacional es de 70 puntos. Un colegio privado afirma que sus estudiantes logran puntajes superiores. Se evalúa a una muestra de 49 estudiantes y se obtiene una media de 73 puntos con una desviación típica muestral S de 7.",
+        clickableText: "La media histórica de un examen de aptitud nacional es de <button class=\"clickable-data\" onclick=\"clickTextData('70')\">70</button> puntos. Un colegio privado afirma que sus estudiantes logran puntajes superiores. Se evalúa a una muestra de <button class=\"clickable-data\" onclick=\"clickTextData('49')\">49</button> estudiantes y se obtiene una media de <button class=\"clickable-data\" onclick=\"clickTextData('73')\">73</button> puntos con una desviación típica muestral S de <button class=\"clickable-data\" onclick=\"clickTextData('7')\">7</button>.",
+        mu0: "70",
+        sigma2: "49", // derivado
+        sigma: "7",
+        n: "49",
+        xbar: "73",
+        direction: "right",
+        dist: "T",
+        targetVarLabel: "S²",
+        targetDevLabel: "S",
+        zCalc: 3.00,
+        zCrit: 1.677, // t con df=48
+        pValue: 0.002,
+        claim: "puntajes superiores",
+        rejectMessage: "Los estudiantes logran puntajes promedio significativamente mayores a 70."
+      },
+      {
+        id: 6,
+        title: "Tiempos de Carga de Web App",
+        text: "El tiempo medio de carga de una página web optimizada solía ser de 5 segundos. Tras un cambio de servidor, se evalúa una muestra de 100 accesos y se obtiene una media de 4.4 segundos con una varianza conocida de 9.",
+        clickableText: "El tiempo medio de carga de una página web optimizada solía ser de <button class=\"clickable-data\" onclick=\"clickTextData('5')\">5</button> segundos. Tras un cambio de servidor, se evalúa una muestra de <button class=\"clickable-data\" onclick=\"clickTextData('100')\">100</button> accesos y se obtiene una media de <button class=\"clickable-data\" onclick=\"clickTextData('4.4')\">4.4</button> segundos con una varianza conocida de <button class=\"clickable-data\" onclick=\"clickTextData('9')\">9</button>.",
+        mu0: "5",
+        sigma2: "9",
+        sigma: "3",
+        n: "100",
+        xbar: "4.4",
+        direction: "left",
+        dist: "Z",
+        targetVarLabel: "σ²",
+        targetDevLabel: "σ",
+        zCalc: -2.00,
+        zCrit: -1.645,
+        pValue: 0.0228,
+        claim: "reducción del tiempo de carga",
+        rejectMessage: "El nuevo servidor redujo significativamente el tiempo de carga promedio."
+      },
+      {
+        id: 7,
+        title: "Temperatura de Reactor Químico",
+        text: "Un reactor químico debe operar estable a 120 grados. El supervisor teme que esté descalibrado. Registra 36 mediciones aleatorias que promedian 121 grados con una desviación típica muestral S de 3.",
+        clickableText: "Un reactor químico debe operar estable a <button class=\"clickable-data\" onclick=\"clickTextData('120')\">120</button> grados. El supervisor teme que esté descalibrado. Registra <button class=\"clickable-data\" onclick=\"clickTextData('36')\">36</button> mediciones aleatorias que promedian <button class=\"clickable-data\" onclick=\"clickTextData('121')\">121</button> grados con una desviación típica muestral S de <button class=\"clickable-data\" onclick=\"clickTextData('3')\">3</button>.",
+        mu0: "120",
+        sigma2: "9",
+        sigma: "3",
+        n: "36",
+        xbar: "121",
+        direction: "two-tailed",
+        dist: "T",
+        targetVarLabel: "S²",
+        targetDevLabel: "S",
+        zCalc: 2.00,
+        zCrit: 2.03, // bilateral df=35
+        pValue: 0.053,
+        claim: "descalibración (desviación de 120°)",
+        rejectMessage: "No se puede afirmar descalibración (cae en zona de aceptación a nivel 5%)."
+      },
+      {
+        id: 8,
+        title: "Consumo de Combustible (Autobús)",
+        text: "Una flota de autobuses registra un consumo promedio de 30 litros cada 100 km. Al usar un aditivo, se monitorea una muestra de 64 autobuses y el promedio baja a 28.5 litros con una varianza conocida de 16.",
+        clickableText: "Una flota de autobuses registra un consumo promedio de <button class=\"clickable-data\" onclick=\"clickTextData('30')\">30</button> litros cada 100 km. Al usar un aditivo, se monitorea una muestra de <button class=\"clickable-data\" onclick=\"clickTextData('64')\">64</button> autobuses y el promedio baja a <button class=\"clickable-data\" onclick=\"clickTextData('28.5')\">28.5</button> litros con una varianza conocida de <button class=\"clickable-data\" onclick=\"clickTextData('16')\">16</button>.",
+        mu0: "30",
+        sigma2: "16",
+        sigma: "4",
+        n: "64",
+        xbar: "28.5",
+        direction: "left",
+        dist: "Z",
+        targetVarLabel: "σ²",
+        targetDevLabel: "σ",
+        zCalc: -3.00,
+        zCrit: -1.645,
+        pValue: 0.0013,
+        claim: "reducción del consumo",
+        rejectMessage: "El aditivo disminuye significativamente el consumo promedio."
+      },
+      {
+        id: 9,
+        title: "Vida Útil de Focos LED",
+        text: "Un fabricante de focos LED asegura una vida útil media de 50000 horas. Una auditoría externa toma 64 focos y obtiene una media de 49400 horas con una desviación estándar muestral S de 2400.",
+        clickableText: "Un fabricante de focos LED asegura una vida útil media de <button class=\"clickable-data\" onclick=\"clickTextData('50000')\">50000</button> horas. Una auditoría externa toma <button class=\"clickable-data\" onclick=\"clickTextData('64')\">64</button> focos y obtiene una media de <button class=\"clickable-data\" onclick=\"clickTextData('49400')\">49400</button> horas con una desviación estándar muestral S de <button class=\"clickable-data\" onclick=\"clickTextData('2400')\">2400</button>.",
+        mu0: "50000",
+        sigma2: "5760000", // 2400^2
+        sigma: "2400",
+        n: "64",
+        xbar: "49400",
+        direction: "left",
+        dist: "T",
+        targetVarLabel: "S²",
+        targetDevLabel: "S",
+        zCalc: -2.00,
+        zCrit: -1.67,
+        pValue: 0.0245,
+        claim: "vida útil inferior a la prometida",
+        rejectMessage: "La vida útil de los focos es significativamente inferior a 50,000 horas."
+      },
+      {
+        id: 10,
+        title: "Grosor de Placas Metálicas",
+        text: "Una laminadora calibra placas para que midan 20 mm de grosor. Se analiza una muestra de 49 placas sospechando que salen más gruesas de lo debido, obteniendo una media de 20.6 mm con una varianza conocida de 4.",
+        clickableText: "Una laminadora calibra placas para que midan <button class=\"clickable-data\" onclick=\"clickTextData('20')\">20</button> mm de grosor. Se analiza una muestra de <button class=\"clickable-data\" onclick=\"clickTextData('49')\">49</button> placas sospechando que salen más gruesas de lo debido, obteniendo una media de <button class=\"clickable-data\" onclick=\"clickTextData('20.6')\">20.6</button> mm con una varianza conocida de <button class=\"clickable-data\" onclick=\"clickTextData('4')\">4</button>.",
+        mu0: "20",
+        sigma2: "4",
+        sigma: "2",
+        n: "49",
+        xbar: "20.6",
+        direction: "right",
+        dist: "Z",
+        targetVarLabel: "σ²",
+        targetDevLabel: "σ",
+        zCalc: 2.10,
+        zCrit: 1.645,
+        pValue: 0.0179,
+        claim: "mayor grosor de las placas",
+        rejectMessage: "Las placas metálicas son significativamente más gruesas de 20 mm."
+      }
+    ];
+
+    // GENERADOR PARA COMPLETAR LOS 25 EJERCICIOS
+    function generateMissingExercises() {
+      const contexts = [
+        { title: "Entrega de Pizza", metric: "minutos", action: "reducción", mu0: 30, n: 36, sd: 6, diff: -2.5, right: false, dist: "Z" },
+        { title: "Rendimiento Agrícola", metric: "toneladas", action: "incremento", mu0: 12, n: 64, sd: 4, diff: 1.25, right: true, dist: "T" },
+        { title: "Pureza de Reactivo", metric: "porcentaje", action: "cambio", mu0: 95, n: 100, sd: 5, diff: 1.5, right: null, dist: "Z" },
+        { title: "Tiempo de Ensamble", metric: "segundos", action: "reducción", mu0: 80, n: 64, sd: 8, diff: -2, right: false, dist: "T" },
+        { title: "Presión de Neumáticos", metric: "psi", action: "cambio", mu0: 32, n: 16, sd: 2, diff: 1.5, right: null, dist: "T" },
+        { title: "Pérdida de Peso", metric: "kg", action: "incremento", mu0: 5, n: 49, sd: 7, diff: 2.5, right: true, dist: "Z" },
+        { title: "Dureza de Plásticos", metric: "Rockwell", action: "cambio", mu0: 110, n: 25, sd: 5, diff: -2, right: null, dist: "Z" },
+        { title: "Vida de Batería (Reloj)", metric: "meses", action: "reducción", mu0: 24, n: 144, sd: 6, diff: -1.5, right: false, dist: "Z" },
+        { title: "Absorción de Agua", metric: "ml", action: "incremento", mu0: 45, n: 81, sd: 9, diff: 2, right: true, dist: "T" },
+        { title: "Flujo de Gasolina", metric: "galones/min", action: "cambio", mu0: 15, n: 64, sd: 4, diff: 1.5, right: null, dist: "Z" },
+        { title: "Tiempo de Respuesta (Servidor)", metric: "ms", action: "reducción", mu0: 200, n: 100, sd: 50, diff: -12.5, right: false, dist: "T" },
+        { title: "Carga de Rotura (Hilos)", metric: "g", action: "incremento", mu0: 400, n: 144, sd: 24, diff: 6, right: true, dist: "Z" },
+        { title: "Contenido de Sal (Agua)", metric: "mg/l", action: "reducción", mu0: 250, n: 64, sd: 16, diff: -5, right: false, dist: "T" },
+        { title: "Humedad de Madera", metric: "porcentaje", action: "cambio", mu0: 12, n: 36, sd: 3, diff: 1.2, right: null, dist: "Z" },
+        { title: "Calificación de Servicio", metric: "puntos", action: "incremento", mu0: 85, n: 100, sd: 10, diff: 2.5, right: true, dist: "T" }
+      ];
+
+      contexts.forEach((c, index) => {
+        const id = EXERCISES_DATABASE.length + 1;
+        const xbar = c.right === null ? (c.mu0 + c.diff) : (c.right ? (c.mu0 + c.diff) : (c.mu0 + c.diff));
+        
+        let direction = "two-tailed";
+        if (c.right === true) direction = "right";
+        if (c.right === false) direction = "left";
+
+        const text = `Se analiza si la media de un test de ${c.title} (${c.metric}) ha sufrido una ${c.action} respecto al valor de referencia de ${c.mu0}. Para ello, se evalúa una muestra de ${c.n} observaciones obteniendo una media de ${xbar} con una ${c.dist === 'Z' ? 'varianza de la población conocida de ' + (c.sd * c.sd) : 'desviación estándar muestral S de ' + c.sd}.`;
+        
+        const clickableText = `Se analiza si la media de un test de ${c.title} (${c.metric}) ha sufrido una ${c.action} respecto al valor de referencia de <button class="clickable-data" onclick="clickTextData('${c.mu0}')">${c.mu0}</button>. Para ello, se evalúa una muestra de <button class="clickable-data" onclick="clickTextData('${c.n}')">${c.n}</button> observaciones obteniendo una media de <button class="clickable-data" onclick="clickTextData('${xbar}')">${xbar}</button> con una ${c.dist === 'Z' ? 'varianza de la población conocida de <button class="clickable-data" onclick="clickTextData(\'' + (c.sd * c.sd) + '\')">' + (c.sd * c.sd) + '</button>' : 'desviación estándar muestral S de <button class="clickable-data" onclick="clickTextData(\'' + c.sd + '\')">' + c.sd + '</button>'}.`;
+
+        const zCalcVal = (xbar - c.mu0) / (c.sd / Math.sqrt(c.n));
+
+        let zCritVal = 1.96;
+        if (c.dist === "Z") {
+          if (direction === "left") zCritVal = -1.645;
+          else if (direction === "right") zCritVal = 1.645;
+          else zCritVal = 1.96;
+        } else {
+          const dfVal = c.n - 1;
+          if (dfVal === 15) {
+            zCritVal = direction === "two-tailed" ? 2.131 : (direction === "left" ? -1.753 : 1.753);
+          } else if (dfVal === 63) {
+            zCritVal = direction === "two-tailed" ? 2.000 : (direction === "left" ? -1.669 : 1.669);
+          } else if (dfVal === 80) {
+            zCritVal = direction === "two-tailed" ? 1.990 : (direction === "left" ? -1.664 : 1.664);
+          } else if (dfVal === 99) {
+            zCritVal = direction === "two-tailed" ? 1.984 : (direction === "left" ? -1.660 : 1.660);
+          } else {
+            zCritVal = direction === "two-tailed" ? 2.000 : (direction === "left" ? -1.670 : 1.670);
+          }
+        }
+
+        EXERCISES_DATABASE.push({
+          id: id,
+          title: `${c.title} (Simulación)`,
+          text: text,
+          clickableText: clickableText,
+          mu0: c.mu0.toString(),
+          sigma2: (c.sd * c.sd).toString(),
+          sigma: c.sd.toString(),
+          n: c.n.toString(),
+          xbar: xbar.toString(),
+          direction: direction,
+          dist: c.dist,
+          targetVarLabel: c.dist === "Z" ? "σ²" : "S²",
+          targetDevLabel: c.dist === "Z" ? "σ" : "S",
+          zCalc: parseFloat(zCalcVal.toFixed(2)),
+          zCrit: zCritVal,
+          pValue: direction === "two-tailed" ? 0.025 : 0.012, // aprox genérica para visualización
+          claim: `${c.action} en la media`,
+          rejectMessage: `La media ha sufrido una modificación significativa respecto al histórico de ${c.mu0}.`
+        });
+      });
+    }
+
+    generateMissingExercises();
+
+    // SISTEMA DE ORDEN ALEATORIO SIN REPETICIÓN
+    let exercisesOrder = [];
+    let currentExerciseIndex = 0;
+    let activeExercise = null;
+    let selectedDistribution = null;
+    let selectedContrastDir = null;
+    let selectedAlpha = null;
+
+    // Fase 1: Datos y slots de extracción
+    let activeExtSlot = null;
+    let extSelections = { 'mu0': null, 'sigma2': null, 'sigma': null, 'n': null, 'xbar': null };
+    let extAnswers = { 'mu0': '15', 'sigma2': '16', 'sigma': '4', 'n': '64', 'xbar': '13.75' };
+
+    // Fase 2: Hipótesis
+    let activeHypSlot = null;
+    let hypSelections = { 'h0-op': null, 'h0-val': null, 'h1-op': null, 'h1-val': null };
+    const hypAnswers = { 'h0-op': '≥', 'h0-val': '15', 'h1-op': '<', 'h1-val': '15' };
+
+    // Fase 3: Slots de fórmula
+    let activeMathSlot = null;
+    let mathSelections = { 'xbar': null, 'mu0': null, 'sigma': null, 'n': null };
+    const mathAnswers = { 'xbar': 'xbar', 'mu0': 'mu0', 'sigma': 'sigma', 'n': 'n' };
+
+    function initExercisesQueue() {
+      exercisesOrder = Array.from({length: EXERCISES_DATABASE.length}, (_, i) => i);
+      for (let i = exercisesOrder.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [exercisesOrder[i], exercisesOrder[j]] = [exercisesOrder[j], exercisesOrder[i]];
+      }
+      currentExerciseIndex = 0;
+      loadExercise(exercisesOrder[currentExerciseIndex]);
+    }
+
+    function loadExercise(indexInDb) {
+      activeExercise = EXERCISES_DATABASE[indexInDb];
+      
+      // Sincronizar respuestas esperadas de la extracción
+      extAnswers.mu0 = activeExercise.mu0;
+      extAnswers.sigma = activeExercise.sigma;
+      extAnswers.n = activeExercise.n;
+      extAnswers.xbar = activeExercise.xbar;
+
+      // Actualizar UI general
+      document.getElementById('ex-number').innerText = `Ej. ${currentExerciseIndex + 1}/${EXERCISES_DATABASE.length}`;
+      document.getElementById('ex-title').innerText = activeExercise.title;
+      document.getElementById('ex-text-0').innerText = activeExercise.text;
+      document.getElementById('ex-text-clickable-1').innerText = activeExercise.text;
+
+      // Actualizar enunciados en el drawer de ayuda
+      document.getElementById('drawer-problem-content').innerHTML = `<p>${activeExercise.text}</p>`;
+
+      // Modificar etiquetas de variables en base a si es Z o T
+      document.getElementById('label-ext-dev').innerText = activeExercise.targetDevLabel;
+      document.getElementById('desc-ext-dev').innerText = activeExercise.dist === "Z" ? "Desviación estándar de la población σ" : "Desviación estándar de la muestra S";
+
+      document.getElementById('formula-var-name').innerText = `${activeExercise.dist} =`;
+
+      // Cargar ayuda de formulas correspondiente
+      document.getElementById('drawer-formulas-content').innerHTML = `
+        <div class="formula-ref-item">
+          <div class="formula-ref-math">$$${activeExercise.dist} = \\frac{\\bar{x} - \\mu_0}{${activeExercise.targetDevLabel} / \\sqrt{n}}$$</div>
+          <strong>Estadístico ${activeExercise.dist}:</strong> Pivote ${activeExercise.dist === 'Z' ? 'normal estándar' : 't-Student'} usado para este contraste.
+        </div>
+        <div class="formula-ref-item">
+          <div class="formula-ref-math">$$\\alpha = 0.05 \\rightarrow ${activeExercise.dist.toLowerCase()}_{crit} = ${activeExercise.zCrit}$$</div>
+          <strong>Región Crítica:</strong> Valor límite para rechazar $H_0$.
+        </div>
+      `;
+
+      // Configurar el Paso 3 (Fórmula): Poner la desviación pre-rellenada
+      const sigmaSlotFormula = document.getElementById('slot-f-sigma');
+      sigmaSlotFormula.innerText = activeExercise.sigma;
+      sigmaSlotFormula.className = 'math-slot correct-slot filled';
+      mathSelections['sigma'] = activeExercise.sigma; // Ya está pre-rellenado
+
+      // Cambiar el símbolo de la desviación según sea Z o T
+      document.querySelector('#slot-f-sigma').parentNode.innerHTML = `<div class="math-slot correct-slot filled" id="slot-f-sigma" style="cursor: default; pointer-events: none;">${activeExercise.targetDevLabel === 'S' ? 'S' : 'σ'}</div><span>/ √</span><div class="math-slot" id="slot-f-n" onclick="setActiveMathSlot('n')">n</div>`;
+      // Re-establecer el valor
+      document.getElementById('slot-f-sigma').innerText = activeExercise.sigma;
+
+      // Resetear estado del juego local
+      resetAll();
+    }
+
+    function skipToNextExercise() {
+      currentExerciseIndex = (currentExerciseIndex + 1) % EXERCISES_DATABASE.length;
+      loadExercise(exercisesOrder[currentExerciseIndex]);
+    }
+
+    window.onload = () => {
+      initExercisesQueue();
+    };
+
+    function resetAll() {
+      document.querySelectorAll('.drawer').forEach(d => d.classList.remove('open'));
+      selectedDistribution = null;
+      selectedContrastDir = null;
+      selectedAlpha = null;
+      extSelections = { 'mu0': null, 'sigma': null, 'n': null, 'xbar': null };
+      hypSelections = { 'h0-op': null, 'h0-val': null, 'h1-op': null, 'h1-val': null };
+      mathSelections = { 'xbar': null, 'mu0': null, 'sigma': activeExercise.sigma, 'n': null }; // Sigma ya tiene valor precalculado
+
+      document.getElementById('dist-feedback').style.display = 'none';
+      document.getElementById('ext-feedback').style.display = 'none';
+      document.getElementById('hyp-feedback').style.display = 'none';
+      document.getElementById('param-feedback').style.display = 'none';
+      document.getElementById('decision-feedback').style.display = 'none';
+      document.getElementById('contrast-feedback').style.display = 'none';
+
+      document.getElementById('choice-z').className = 'choice-card';
+      document.getElementById('choice-t').className = 'choice-card';
+      document.getElementById('choice-dir-left').className = 'choice-card';
+      document.getElementById('choice-dir-right').className = 'choice-card';
+      document.getElementById('choice-dir-two').className = 'choice-card';
+      document.getElementById('choice-alpha-05').className = 'choice-card';
+      document.getElementById('choice-alpha-01').className = 'choice-card';
+      document.getElementById('decision-reject').className = 'btn-action';
+      document.getElementById('decision-accept').className = 'btn-action';
+
+
+      // Limpiar math slots en la UI (excepto sigma)
+      const slotXbar = document.getElementById('slot-f-xbar');
+      const slotMu0 = document.getElementById('slot-f-mu0');
+      const slotN = document.getElementById('slot-f-n');
+
+      if (slotXbar) { slotXbar.className = 'math-slot'; slotXbar.innerText = 'x̄'; }
+      if (slotMu0) { slotMu0.className = 'math-slot'; slotMu0.innerText = 'μ₀'; }
+      if (slotN) { slotN.className = 'math-slot'; slotN.innerText = 'n'; }
+
+      // Limpiar slots de extracción
+      document.querySelectorAll('.extraction-slot').forEach(slot => {
+        slot.className = 'extraction-slot';
+        slot.innerText = '?';
+      });
+
+      // Limpiar slots de hipótesis
+      document.querySelectorAll('.hyp-slot').forEach(slot => {
+        slot.className = 'hyp-slot';
+        slot.innerText = '?';
+      });
+
+      // Asegurar que los botones de avanzar estén bloqueados de inicio
+      document.getElementById('btn-next-0').classList.add('disabled');
+      document.getElementById('btn-next-1').classList.add('disabled');
+      document.getElementById('btn-next-2').classList.add('disabled');
+      document.getElementById('btn-next-3').classList.add('disabled');
+      document.getElementById('btn-next-4').classList.add('disabled');
+      document.getElementById('btn-next-5').classList.add('disabled');
+      document.getElementById('btn-next-6').classList.add('disabled');
+      document.getElementById('btn-next-7').classList.add('disabled');
+      document.getElementById('btn-next-8').classList.add('disabled');
+
+      // Desmarcar palabras del enunciado
+      document.querySelectorAll('.clickable-data').forEach(btn => btn.classList.remove('used'));
+
+      document.getElementById('phase-victory').classList.remove('active');
+      
+      // Ocultar zonas derechas secundarias de gráficos
+      document.getElementById('critical-zone-right-path-6').style.display = 'none';
+      document.getElementById('critical-threshold-right-line-6').style.display = 'none';
+      document.getElementById('critical-zone-right-path-7').style.display = 'none';
+      document.getElementById('p-value-right-path-7').style.display = 'none';
+      document.getElementById('z-calc-right-line-7').style.display = 'none';
+      document.getElementById('z-calc-right-dot-7').style.display = 'none';
+
+      goToPhase(0);
+      triggerMathRender();
+    }
+
+    function goToPhase(phaseIndex) {
+      const currentScreen = document.querySelector(`.phase-screen.active`);
+      if (currentScreen) {
+        currentScreen.classList.remove('active');
+        currentScreen.classList.add('completed');
+      }
+
+      currentPhase = phaseIndex;
+      updateProgress();
+
+      setTimeout(() => {
+        const nextScreen = document.getElementById(`phase-${phaseIndex}`);
+        if (nextScreen) {
+          nextScreen.classList.remove('completed');
+          nextScreen.classList.add('active');
+        }
+        
+        if (phaseIndex === 1) {
+          initExtractionPhase();
+        } else if (phaseIndex === 2) {
+          initHypothesisPhase();
+        } else if (phaseIndex === 3) {
+          initFormulaPhase();
+        } else if (phaseIndex === 4) {
+          initPValTableLookupPhase();
+        } else if (phaseIndex === 5) {
+          initContrastPhase();
+        } else if (phaseIndex === 6) {
+          initCritValuePhase();
+        } else if (phaseIndex === 7) {
+          drawNormalCurve(7, activeExercise.zCrit, activeExercise.zCalc);
+          initPValFormulaPhase();
+        } else if (phaseIndex === 8) {
+          initDecisionPhase();
+        }
+      }, 50);
+    }
+
+    function goToVictory() {
+      const currentScreen = document.querySelector(`.phase-screen.active`);
+      if (currentScreen) {
+        currentScreen.classList.remove('active');
+        currentScreen.classList.add('completed');
+      }
+      
+      document.getElementById('step-number').innerText = "Fin";
+      document.getElementById('progress-fill').style.width = '100%';
+
+      setTimeout(() => {
+        document.getElementById('phase-victory').classList.add('active');
+      }, 50);
+    }
+
+    function updateProgress() {
+      if (currentPhase <= 8) {
+        document.getElementById('step-number').innerText = `Paso ${currentPhase}/8`;
+        document.getElementById('progress-fill').style.width = `${(currentPhase / 8) * 100}%`;
+      }
+    }
+
+    // FASE 0 Lógica
+    function selectDistribution(dist) {
+      const zCard = document.getElementById('choice-z');
+      const tCard = document.getElementById('choice-t');
+      const feedback = document.getElementById('dist-feedback');
+      const feedbackTitle = document.getElementById('dist-feedback-title');
+      const feedbackText = document.getElementById('dist-feedback-text');
+      const nextBtn = document.getElementById('btn-next-0');
+
+      zCard.className = 'choice-card';
+      tCard.className = 'choice-card';
+
+      if (dist === activeExercise.dist) {
+        if (dist === 'Z') zCard.className = 'choice-card correct-selected';
+        else tCard.className = 'choice-card correct-selected';
+
+        feedback.className = "info-card green";
+        feedbackTitle.innerText = "¡Correcto!";
+        feedbackText.innerHTML = dist === 'Z' 
+          ? `Usamos la Normal Z porque conocemos la varianza poblacional ($${activeExercise.targetVarLabel} = ${activeExercise.sigma2}$).`
+          : `Usamos la t-Student porque la varianza de la población es desconocida (usamos la muestral $S^2$).`;
+        nextBtn.classList.remove('disabled');
+      } else {
+        if (dist === 'Z') zCard.className = 'choice-card wrong-selected';
+        else tCard.className = 'choice-card wrong-selected';
+
+        feedback.className = "info-card red";
+        feedbackTitle.innerText = "Incorrecto";
+        feedbackText.innerHTML = dist === 'Z'
+          ? "No conocemos la varianza de la población en este problema."
+          : "La varianza poblacional sí es un dato conocido en este enunciado.";
+        nextBtn.classList.add('disabled');
+      }
+      feedback.style.display = 'block';
+      triggerMathRender();
+    }
+
+    // FASE 1: Extracción con pool de botones
+    function initExtractionPhase() {
+      activeExtSlot = null;
+      document.getElementById('ext-feedback').style.display = 'none';
+      document.getElementById('btn-next-1').classList.add('disabled');
+      
+      // Forzar borrado físico
+      document.querySelectorAll('.extraction-slot').forEach(slot => {
+        slot.className = 'extraction-slot';
+        slot.innerText = '?';
+      });
+
+      setActiveExtSlot('mu0');
+    }
+
+    function setActiveExtSlot(slotId) {
+      activeExtSlot = slotId;
+      document.querySelectorAll('.extraction-slot').forEach(s => s.classList.remove('active-slot'));
+      document.getElementById(`slot-ext-${slotId}`).classList.add('active-slot');
+
+      // Generar el pool de opciones para rellenar
+      const poolContainer = document.getElementById('pool-items-ext-container');
+      poolContainer.innerHTML = '';
+
+      // Valores correctos para la extracción
+      let pool = [activeExercise.mu0, activeExercise.sigma, activeExercise.n, activeExercise.xbar];
+      
+      // Añadir la varianza (sigma2 o S2) como distractor si es diferente
+      if (activeExercise.sigma2 && activeExercise.sigma2 !== activeExercise.sigma) {
+        pool.push(activeExercise.sigma2);
+      }
+
+      // Añadir distractores aleatorios lógicos
+      const mu0Num = parseFloat(activeExercise.mu0);
+      const sigmaNum = parseFloat(activeExercise.sigma);
+      const nNum = parseInt(activeExercise.n);
+      const xbarNum = parseFloat(activeExercise.xbar);
+
+      const d1 = Math.max(1, Math.round(mu0Num + (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 5) + 3))).toString();
+      const d2 = (sigmaNum + (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 2 + 1.2)).toFixed(2).replace(/\.00$/, '');
+      const d3 = Math.max(5, Math.round(nNum + (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 15) + 8))).toString();
+      const d4 = (xbarNum + (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 2.5 + 1)).toFixed(2).replace(/\.00$/, '');
+
+      [d1, d2, d3, d4].forEach(item => {
+        if (!pool.includes(item)) pool.push(item);
+      });
+
+      // Mezclar aleatoriamente
+      pool.sort(() => Math.random() - 0.5);
+
+      pool.forEach(val => {
+        const btn = document.createElement('button');
+        btn.className = 'pool-item';
+        btn.innerText = val;
+        btn.onclick = () => selectExtValue(val);
+        poolContainer.appendChild(btn);
+      });
+    }
+
+    function selectExtValue(value) {
+      if (!activeExtSlot) return;
+
+      const expectedVal = activeExtSlot === 'mu0' ? activeExercise.mu0 
+                        : activeExtSlot === 'sigma' ? activeExercise.sigma 
+                        : activeExtSlot === 'n' ? activeExercise.n 
+                        : activeExercise.xbar;
+
+      const slotElement = document.getElementById(`slot-ext-${activeExtSlot}`);
+      slotElement.className = 'extraction-slot';
+
+      if (value === expectedVal) {
+        slotElement.innerText = value;
+        slotElement.classList.add('correct-slot', 'filled');
+        extSelections[activeExtSlot] = value;
+
+        let allFilled = Object.values(extSelections).every(v => v !== null);
+        if (allFilled) {
+          const feedback = document.getElementById('ext-feedback');
+          feedback.style.display = 'block';
+          feedback.className = "info-card green";
+          document.getElementById('ext-feedback-text').innerText = `¡Excelente! Has extraído todos los datos necesarios: media histórica (μ₀ = ${activeExercise.mu0}), desviación estándar (${activeExercise.dist === 'Z' ? 'σ' : 'S'} = ${activeExercise.sigma}), tamaño muestral (n = ${activeExercise.n}) y media observada (xbar = ${activeExercise.xbar}).`;
+          document.getElementById('btn-next-1').classList.remove('disabled');
+          activeExtSlot = null;
+          document.querySelectorAll('.extraction-slot').forEach(s => s.classList.remove('active-slot'));
+          // Limpiar pool
+          document.getElementById('pool-items-ext-container').innerHTML = '';
+        } else {
+          const order = ['mu0', 'sigma', 'n', 'xbar'];
+          const nextSlot = order.find(k => extSelections[k] === null);
+          if (nextSlot) setActiveExtSlot(nextSlot);
+        }
+      } else {
+        slotElement.classList.add('wrong-slot');
+        setTimeout(() => {
+          slotElement.classList.remove('wrong-slot');
+        }, 500);
+      }
+    }
+
+    // FASE 2: Hipótesis
+    function initHypothesisPhase() {
+      activeHypSlot = null;
+      document.getElementById('hyp-feedback').style.display = 'none';
+      document.getElementById('btn-next-2').classList.add('disabled');
+      setActiveHypSlot('h0-op');
+    }
+
+    function setActiveHypSlot(slotId) {
+      activeHypSlot = slotId;
+      document.querySelectorAll('.hyp-slot').forEach(s => s.classList.remove('selected-slot'));
+      document.getElementById(`slot-${slotId}`).classList.add('selected-slot');
+      
+      const poolContainer = document.getElementById('pool-items-container');
+      const poolLabel = document.getElementById('pool-label-text');
+      poolContainer.innerHTML = '';
+
+      if (slotId.includes('op')) {
+        poolLabel.innerText = "Operador lógico:";
+        const ops = ['≥', '<', '=', '>', '≤', '≠'];
+        ops.forEach(op => {
+          const btn = document.createElement('button');
+          btn.className = 'pool-item';
+          btn.innerText = op;
+          btn.onclick = () => selectHypValue(op);
+          poolContainer.appendChild(btn);
+        });
+      } else {
+        poolLabel.innerText = "Valor parámetro:";
+        const vals = [activeExercise.mu0, activeExercise.xbar, activeExercise.sigma, activeExercise.n];
+        vals.forEach(val => {
+          const btn = document.createElement('button');
+          btn.className = 'pool-item';
+          btn.innerText = val;
+          btn.onclick = () => selectHypValue(val);
+          poolContainer.appendChild(btn);
+        });
+      }
+    }
+
+    function selectHypValue(value) {
+      if (!activeHypSlot) return;
+
+      const slotElement = document.getElementById(`slot-${activeHypSlot}`);
+      slotElement.innerText = value;
+      slotElement.classList.add('filled');
+      hypSelections[activeHypSlot] = value;
+
+      let allFilled = Object.values(hypSelections).every(v => v !== null);
+      if (allFilled) {
+        checkHypothesisCorrectness();
+      } else {
+        if (activeHypSlot === 'h0-op') setActiveHypSlot('h0-val');
+        else if (activeHypSlot === 'h0-val') setActiveHypSlot('h1-op');
+        else if (activeHypSlot === 'h1-op') setActiveHypSlot('h1-val');
+      }
+    }
+
+    function checkHypothesisCorrectness() {
+      let h0OpExpected = '≥';
+      let h1OpExpected = '<';
+
+      if (activeExercise.direction === 'right') {
+        h0OpExpected = '≤';
+        h1OpExpected = '>';
+      } else if (activeExercise.direction === 'two-tailed') {
+        h0OpExpected = '=';
+        h1OpExpected = '≠';
+      }
+
+      const answers = {
+        'h0-op': h0OpExpected,
+        'h0-val': activeExercise.mu0,
+        'h1-op': h1OpExpected,
+        'h1-val': activeExercise.mu0
+      };
+
+      let isCorrect = true;
+      Object.keys(answers).forEach(key => {
+        const slotEl = document.getElementById(`slot-${key}`);
+        slotEl.className = 'hyp-slot filled';
+        if (hypSelections[key] === answers[key]) {
+          slotEl.classList.add('correct-slot');
+        } else {
+          slotEl.classList.add('wrong-slot');
+          isCorrect = false;
+        }
+      });
+
+      const feedback = document.getElementById('hyp-feedback');
+      const feedbackText = document.getElementById('hyp-feedback-text');
+      const nextBtn = document.getElementById('btn-next-2');
+      
+      if (isCorrect) {
+        feedback.style.display = 'block';
+        feedbackText.innerHTML = `Contraste <strong>${activeExercise.direction === 'left' ? 'unilateral izquierdo' : (activeExercise.direction === 'right' ? 'unilateral derecho' : 'bilateral')}</strong> para verificar ${activeExercise.claim}.`;
+        nextBtn.classList.remove('disabled');
+        triggerMathRender();
+      } else {
+        feedback.style.display = 'none';
+        nextBtn.classList.add('disabled');
+        setTimeout(() => {
+          Object.keys(answers).forEach(key => {
+            const slotEl = document.getElementById(`slot-${key}`);
+            if (hypSelections[key] !== answers[key]) {
+              slotEl.innerText = '?';
+              slotEl.className = 'hyp-slot';
+              hypSelections[key] = null;
+            }
+          });
+          const firstWrong = Object.keys(hypSelections).find(k => hypSelections[k] === null);
+          if (firstWrong) setActiveHypSlot(firstWrong);
+        }, 1200);
+      }
+    }
+
+    // FASE 3: SUSTITUCIÓN FÓRMULA (CON GENERACIÓN DE NÚMEROS ALEATORIOS)
+    function initFormulaPhase() {
+      activeMathSlot = null;
+      document.getElementById('param-feedback').style.display = 'none';
+      document.getElementById('btn-next-3').classList.add('disabled');
+
+      // Limpiar slots del formulario
+      const slotXbar = document.getElementById('slot-f-xbar');
+      const slotMu0 = document.getElementById('slot-f-mu0');
+      const slotN = document.getElementById('slot-f-n');
+
+      if (slotXbar) { slotXbar.className = 'math-slot'; slotXbar.innerText = 'x̄'; }
+      if (slotMu0) { slotMu0.className = 'math-slot'; slotMu0.innerText = 'μ₀'; }
+      if (slotN) { slotN.className = 'math-slot'; slotN.innerText = 'n'; }
+
+      // Seleccionar el primer slot por defecto
+      setActiveMathSlot('xbar');
+    }
+
+    function setActiveMathSlot(slotId) {
+      if (slotId === 'sigma') return; // Pre-rellenado
+      activeMathSlot = slotId;
+      document.querySelectorAll('.math-slot').forEach(s => s.classList.remove('active-slot'));
+      document.getElementById(`slot-f-${slotId}`).classList.add('active-slot');
+
+      // Generar el pool de opciones para rellenar
+      const poolContainer = document.getElementById('pool-items-formula-container');
+      poolContainer.innerHTML = '';
+
+      // Crear pool con los valores correctos de xbar, mu0 y n
+      let pool = [activeExercise.xbar, activeExercise.mu0, activeExercise.n];
+      
+      // Añadir distractores verdaderamente aleatorios
+      const xbarNum = parseFloat(activeExercise.xbar);
+      const mu0Num = parseFloat(activeExercise.mu0);
+      const nNum = parseInt(activeExercise.n);
+
+      // Distractor 1: Cerca de xbar (sumar o restar entre 1.5 y 4.5)
+      const d1 = (xbarNum + (Math.random() > 0.5 ? 1 : -1) * (Math.random() * 3 + 1.5)).toFixed(2).replace(/\.00$/, '');
+      
+      // Distractor 2: Cerca de n (sumar o restar entre 10 y 30, asegurando que sea entero positivo)
+      const d2 = Math.max(10, Math.round(nNum + (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 20) + 10))).toString();
+      
+      // Distractor 3: Cerca de mu0 (sumar o restar entre 5 y 15)
+      const d3 = Math.max(1, Math.round(mu0Num + (Math.random() > 0.5 ? 1 : -1) * (Math.floor(Math.random() * 10) + 5))).toString();
+      
+      // Distractor 4: Un número decimal aleatorio tipo Z crítico o p-valor común
+      const commonStats = ["1.96", "1.645", "2.58", "0.05", "0.01", "2.33"];
+      const d4 = commonStats[Math.floor(Math.random() * commonStats.length)];
+      
+      [d1, d2, d3, d4].forEach(item => {
+        if (!pool.includes(item)) pool.push(item);
+      });
+
+      // Mezclar aleatoriamente el pool
+      pool.sort(() => Math.random() - 0.5);
+
+      pool.forEach(val => {
+        const btn = document.createElement('button');
+        btn.className = 'pool-item';
+        btn.innerText = val;
+        btn.onclick = () => selectFormulaValue(val);
+        poolContainer.appendChild(btn);
+      });
+    }
+
+    function selectFormulaValue(value) {
+      if (!activeMathSlot) return;
+
+      const expectedVal = activeMathSlot === 'xbar' ? activeExercise.xbar : (activeMathSlot === 'mu0' ? activeExercise.mu0 : activeExercise.n);
+      const slotElement = document.getElementById(`slot-f-${activeMathSlot}`);
+
+      slotElement.className = 'math-slot';
+
+      if (value === expectedVal) {
+        slotElement.innerText = value;
+        slotElement.classList.add('correct-slot', 'filled');
+        mathSelections[activeMathSlot] = value;
+
+        // Comprobar si se ha completado todo
+        let allFilled = Object.values(mathSelections).every(v => v !== null);
+        if (allFilled) {
+          const feedback = document.getElementById('param-feedback');
+          const feedbackText = document.getElementById('param-feedback-text');
+          feedback.style.display = 'block';
+          feedbackText.innerHTML = `Sustitución exitosa en la fórmula del estadístico $${activeExercise.dist}$.`;
+          document.getElementById('btn-next-3').classList.remove('disabled');
+          activeMathSlot = null;
+          document.querySelectorAll('.math-slot').forEach(s => s.classList.remove('active-slot'));
+          triggerMathRender();
+        } else {
+          // Avanzar al siguiente slot
+          const order = ['xbar', 'mu0', 'n'];
+          const nextSlot = order.find(k => mathSelections[k] === null);
+          if (nextSlot) setActiveMathSlot(nextSlot);
+        }
+      } else {
+        slotElement.classList.add('wrong-slot');
+        setTimeout(() => {
+          slotElement.classList.remove('wrong-slot');
+        }, 500);
+      }
+    }
+    // FASE 4: Buscar P-Valor en Tabla
+    let selectedPValLookupValue = null;
+
+    function initPValTableLookupPhase() {
+      selectedPValLookupValue = null;
+      document.getElementById('btn-next-4').classList.add('disabled');
+      const slot = document.getElementById('slot-p-lookup-val');
+      slot.className = 'math-slot';
+      slot.innerText = '?';
+
+      const dist = activeExercise.dist;
+      const zCalcVal = activeExercise.zCalc;
+      const absCalc = Math.abs(zCalcVal);
+
+      document.getElementById('p-lookup-calc-val').innerHTML = `${dist}<sub>calc</sub> = ${zCalcVal}`;
+
+      // Configurar etiqueta de búsqueda de probabilidad
+      const lookupLabel = document.getElementById('p-lookup-label');
+      if (dist === 'Z') {
+        lookupLabel.innerHTML = `P(Z &lt; ${absCalc.toFixed(2)}):`;
+      } else {
+        const df = parseInt(activeExercise.n) - 1;
+        lookupLabel.innerHTML = `Buscar valor más cercano a |t| = ${absCalc.toFixed(2)} con df = ${df}:`;
+      }
+
+      const tableContent = document.getElementById('p-lookup-table-content');
+      if (dist === 'Z') {
+        // Generar la Tabla Normal Completa N(0;1) de z = 0.0 a 3.0 (10 columnas de decimales)
+        let zHtml = `
+          <div class="table-scroll-container">
+            <table class="interactive-stat-table">
+              <thead>
+                <tr>
+                  <th>z</th>
+                  <th>0.00</th>
+                  <th>0.01</th>
+                  <th>0.02</th>
+                  <th>0.03</th>
+                  <th>0.04</th>
+                  <th>0.05</th>
+                  <th>0.06</th>
+                  <th>0.07</th>
+                  <th>0.08</th>
+                  <th>0.09</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+
+        for (let r = 0; r <= 30; r++) {
+          const zRow = (r / 10).toFixed(1);
+          zHtml += `<tr><td><strong>${zRow}</strong></td>`;
+          for (let c = 0; c <= 9; c++) {
+            const zVal = parseFloat(zRow) + (c / 100);
+            const prob = normalCDF(zVal);
+            let probStr = prob.toFixed(4).substring(1); // ej: ".9505"
+            if (probStr === "1.0000") probStr = ".9999";
+            zHtml += `
+              <td class="table-cell-val" 
+                  data-z="${zVal.toFixed(2)}" 
+                  data-prob="${prob.toFixed(4)}" 
+                  onclick="selectPValLookupZTableCell(this, ${zVal})">${probStr}</td>`;
+          }
+          zHtml += '</tr>';
+        }
+
+        zHtml += `
+              </tbody>
+            </table>
+          </div>
+        `;
+        tableContent.innerHTML = zHtml;
+
+      } else {
+        // Generar Tabla t-Student con grados de libertad y significación
+        const df = parseInt(activeExercise.n) - 1;
+        const rows = [10, 15, 20, 24, 30, 35, 40, 48, 60, 63, 80, 99, 120, "∞"];
+        
+        const tTableData = {
+          10: ["1.812", "2.228", "2.764", "3.169"],
+          15: ["1.753", "2.131", "2.602", "2.947"],
+          20: ["1.725", "2.086", "2.528", "2.845"],
+          24: ["1.711", "2.064", "2.492", "2.797"],
+          30: ["1.697", "2.042", "2.457", "2.750"],
+          35: ["1.690", "2.030", "2.438", "2.724"], 
+          40: ["1.684", "2.021", "2.423", "2.704"], 
+          48: ["1.677", "2.010", "2.407", "2.682"], 
+          60: ["1.671", "2.000", "2.390", "2.660"], 
+          63: ["1.669", "2.000", "2.387", "2.656"], 
+          80: ["1.664", "1.990", "2.374", "2.639"], 
+          99: ["1.660", "1.984", "2.365", "2.626"], 
+          120: ["1.658", "1.980", "2.358", "2.617"],
+          "∞": ["1.645", "1.960", "2.326", "2.576"]
+        };
+
+        let rowsHtml = '';
+        rows.forEach(r => {
+          const isCurrent = r === df;
+          const bgStyle = isCurrent ? 'style="background: rgba(0, 240, 255, 0.05);"' : '';
+          
+          rowsHtml += `
+            <tr ${bgStyle}>
+              <td><strong>df = ${r}</strong></td>
+              <td class="table-cell-val" onclick="selectPValLookupTTableCell(this, '${r}', 0)">1.753</td>
+              <td class="table-cell-val" onclick="selectPValLookupTTableCell(this, '${r}', 1)">2.131</td>
+              <td class="table-cell-val" onclick="selectPValLookupTTableCell(this, '${r}', 2)">2.602</td>
+              <td class="table-cell-val" onclick="selectPValLookupTTableCell(this, '${r}', 3)">2.947</td>
+            </tr>
+          `;
+        });
+
+        // Corregir valores reales de la celda de t en la UI para cada fila
+        rows.forEach((r, idx) => {
+          rowsHtml = rowsHtml.replace(`onclick="selectPValLookupTTableCell(this, '${r}', 0)">1.753`, `onclick="selectPValLookupTTableCell(this, '${r}', 0)">${tTableData[r][0]}`);
+          rowsHtml = rowsHtml.replace(`onclick="selectPValLookupTTableCell(this, '${r}', 1)">2.131`, `onclick="selectPValLookupTTableCell(this, '${r}', 1)">${tTableData[r][1]}`);
+          rowsHtml = rowsHtml.replace(`onclick="selectPValLookupTTableCell(this, '${r}', 2)">2.602`, `onclick="selectPValLookupTTableCell(this, '${r}', 2)">${tTableData[r][2]}`);
+          rowsHtml = rowsHtml.replace(`onclick="selectPValLookupTTableCell(this, '${r}', 3)">2.947`, `onclick="selectPValLookupTTableCell(this, '${r}', 3)">${tTableData[r][3]}`);
+        });
+
+        tableContent.innerHTML = `
+          <div class="table-scroll-container">
+            <table class="interactive-stat-table">
+              <thead>
+                <tr>
+                  <th>Grados de Libertad (df)</th>
+                  <th>Una cola: 0.05<br>Dos colas: 0.10</th>
+                  <th>Una cola: 0.025<br>Dos colas: 0.05</th>
+                  <th>Una cola: 0.01<br>Dos colas: 0.02</th>
+                  <th>Una cola: 0.005<br>Dos colas: 0.01</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+      triggerMathRender();
+    }
+
+    function selectPValLookupZTableCell(cellElement, zVal) {
+      const absCalc = Math.abs(activeExercise.zCalc);
+      const isCorrect = Math.abs(zVal - absCalc) < 0.015;
+
+      const slotElement = document.getElementById('slot-p-lookup-val');
+
+      document.querySelectorAll('#phase-4 .table-cell-val').forEach(c => {
+        c.classList.remove('correct-cell', 'wrong-cell');
+      });
+
+      if (isCorrect) {
+        cellElement.classList.add('correct-cell');
+        const prob = normalCDF(zVal);
+        let probStr = prob.toFixed(4);
+        slotElement.innerText = probStr;
+        slotElement.classList.add('correct-slot', 'filled');
+        selectedPValLookupValue = probStr;
+
+        document.getElementById('btn-next-4').classList.remove('disabled');
+      } else {
+        cellElement.classList.add('wrong-cell');
+        slotElement.className = 'math-slot';
+        slotElement.innerText = '?';
+        setTimeout(() => {
+          cellElement.classList.remove('wrong-cell');
+        }, 500);
+      }
+    }
+
+    function selectPValLookupTTableCell(cellElement, rowDf, colIndex) {
+      const df = parseInt(activeExercise.n) - 1;
+      const absCalc = Math.abs(activeExercise.zCalc);
+
+      const isCorrectRow = rowDf === df.toString() || (rowDf === '∞' && df > 120);
+
+      const tTableData = {
+        10: [1.812, 2.228, 2.764, 3.169],
+        15: [1.753, 2.131, 2.602, 2.947],
+        20: [1.725, 2.086, 2.528, 2.845],
+        24: [1.711, 2.064, 2.492, 2.797],
+        30: [1.697, 2.042, 2.457, 2.750],
+        35: [1.690, 2.030, 2.438, 2.724],
+        40: [1.684, 2.021, 2.423, 2.704],
+        48: [1.677, 2.010, 2.407, 2.682],
+        60: [1.671, 2.000, 2.390, 2.660],
+        63: [1.669, 2.000, 2.387, 2.656],
+        80: [1.664, 1.990, 2.374, 2.639],
+        99: [1.660, 1.984, 2.365, 2.626],
+        120: [1.658, 1.980, 2.358, 2.617],
+        "∞": [1.645, 1.960, 2.326, 2.576]
+      };
+
+      const rowVals = tTableData[rowDf];
+      let closestColIndex = 0;
+      let minDiff = Infinity;
+      for (let i = 0; i < rowVals.length; i++) {
+        let diff = Math.abs(rowVals[i] - absCalc);
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestColIndex = i;
+        }
+      }
+
+      const isCorrectCol = colIndex === closestColIndex;
+      const slotElement = document.getElementById('slot-p-lookup-val');
+
+      document.querySelectorAll('#phase-4 .table-cell-val').forEach(c => {
+        c.classList.remove('correct-cell', 'wrong-cell');
+      });
+
+      if (isCorrectRow && isCorrectCol) {
+        cellElement.classList.add('correct-cell');
+        
+        slotElement.innerText = rowVals[colIndex].toString();
+        slotElement.classList.add('correct-slot', 'filled');
+        selectedPValLookupValue = rowVals[colIndex].toString();
+
+        document.getElementById('btn-next-4').classList.remove('disabled');
+      } else {
+        cellElement.classList.add('wrong-cell');
+        slotElement.className = 'math-slot';
+        slotElement.innerText = '?';
+        setTimeout(() => {
+          cellElement.classList.remove('wrong-cell');
+        }, 500);
+      }
+    }
+    // FASE 4: Contraste y Significación
+    function initContrastPhase() {
+      selectedContrastDir = null;
+      selectedAlpha = null;
+      document.getElementById('choice-dir-left').className = 'choice-card';
+      document.getElementById('choice-dir-right').className = 'choice-card';
+      document.getElementById('choice-dir-two').className = 'choice-card';
+      document.getElementById('choice-alpha-05').className = 'choice-card';
+      document.getElementById('choice-alpha-01').className = 'choice-card';
+      document.getElementById('contrast-feedback').style.display = 'none';
+      document.getElementById('btn-next-5').classList.add('disabled');
+    }
+
+    function selectContrastDir(dir) {
+      selectedContrastDir = dir;
+      document.getElementById('choice-dir-left').className = 'choice-card';
+      document.getElementById('choice-dir-right').className = 'choice-card';
+      document.getElementById('choice-dir-two').className = 'choice-card';
+
+      if (dir === 'left') document.getElementById('choice-dir-left').className = 'choice-card correct-selected';
+      else if (dir === 'right') document.getElementById('choice-dir-right').className = 'choice-card correct-selected';
+      else if (dir === 'two-tailed') document.getElementById('choice-dir-two').className = 'choice-card correct-selected';
+
+      checkContrastStep();
+    }
+
+    function selectAlpha(alpha) {
+      selectedAlpha = alpha;
+      document.getElementById('choice-alpha-05').className = 'choice-card';
+      document.getElementById('choice-alpha-01').className = 'choice-card';
+
+      if (alpha === '0.05') document.getElementById('choice-alpha-05').className = 'choice-card correct-selected';
+      else if (alpha === '0.01') document.getElementById('choice-alpha-01').className = 'choice-card correct-selected';
+
+      checkContrastStep();
+    }
+
+    function checkContrastStep() {
+      const feedback = document.getElementById('contrast-feedback');
+      const feedbackTitle = document.getElementById('contrast-feedback-title');
+      const feedbackText = document.getElementById('contrast-feedback-text');
+      const nextBtn = document.getElementById('btn-next-5');
+
+      if (!selectedContrastDir || !selectedAlpha) {
+        feedback.style.display = 'none';
+        nextBtn.classList.add('disabled');
+        return;
+      }
+
+      // Validar dirección
+      const isDirCorrect = selectedContrastDir === activeExercise.direction;
+      // Validar alfa (alfa correcto siempre es 0.05 en nuestros enunciados por defecto)
+      const isAlphaCorrect = selectedAlpha === '0.05';
+
+      // Actualizar clases de error si son incorrectos
+      if (!isDirCorrect) {
+        const wrongCard = document.getElementById(selectedContrastDir === 'left' ? 'choice-dir-left' : (selectedContrastDir === 'right' ? 'choice-dir-right' : 'choice-dir-two'));
+        wrongCard.className = 'choice-card wrong-selected';
+      }
+      if (!isAlphaCorrect) {
+        const wrongCard = document.getElementById(selectedAlpha === '0.05' ? 'choice-alpha-05' : 'choice-alpha-01');
+        wrongCard.className = 'choice-card wrong-selected';
+      }
+
+      feedback.style.display = 'block';
+
+      if (isDirCorrect && isAlphaCorrect) {
+        feedback.className = "info-card green";
+        feedbackTitle.innerText = "¡Correcto!";
+        feedbackText.innerHTML = `Efectivamente, al buscar una ${activeExercise.claim === 'reducción del tiempo' || activeExercise.claim.includes('reducción') || activeExercise.claim.includes('menor') ? 'reducción/disminución' : (activeExercise.claim.includes('descalibración') || activeExercise.claim.includes('cambio') ? 'diferencia (descalibración)' : 'mejora/incremento')}, el contraste debe ser <strong>${activeExercise.direction === 'left' ? 'unilateral izquierdo' : (activeExercise.direction === 'right' ? 'unilateral derecho' : 'bilateral')}</strong>.<br>El nivel de significación fijado estándar es <strong>α = 0.05</strong> (5%).`;
+        nextBtn.classList.remove('disabled');
+      } else {
+        feedback.className = "info-card red";
+        feedbackTitle.innerText = "Revisar opciones";
+        let errStr = "";
+        if (!isDirCorrect) errStr += "La dirección del contraste elegida no corresponde a la hipótesis planteada en el enunciado.<br>";
+        if (!isAlphaCorrect) errStr += "El nivel de significación seleccionado no es el adecuado para este contraste (fijado en 5%).";
+        feedbackText.innerHTML = errStr;
+        nextBtn.classList.add('disabled');
+      }
+    }
+
+    // FASE 5: Región Crítica e Interacción con Tablas Completas
+    let selectedCritValue = null;
+
+    // Aproximación matemática para la CDF de la Normal Estándar N(0,1)
+    function normalCDF(z) {
+      const p = 0.3275911;
+      const a1 = 0.254829592;
+      const a2 = -0.284496736;
+      const a3 = 1.421413741;
+      const a4 = -1.453152027;
+      const a5 = 1.061405429;
+      
+      const sign = (z < 0) ? -1 : 1;
+      const x = Math.abs(z) / Math.sqrt(2.0);
+      const t = 1.0 / (1.0 + p * x);
+      const erf = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+      return 0.5 * (1.0 + sign * erf);
+    }
+
+    function initCritValuePhase() {
+      selectedCritValue = null;
+      document.getElementById('btn-next-6').classList.add('disabled');
+      const slot = document.getElementById('slot-crit-val');
+      slot.className = 'math-slot';
+      slot.innerText = '?';
+
+      const dist = activeExercise.dist;
+      const direction = activeExercise.direction;
+      const df = parseInt(activeExercise.n) - 1;
+
+      document.getElementById('region-crit-label').innerHTML = `Valor crítico $${dist}_{crit}$ para $\\alpha = 0.05$:`;
+
+      const tableContent = document.getElementById('crit-table-content');
+      if (dist === 'Z') {
+        // Generar la Tabla Normal Completa N(0;1) de z = 0.0 a 3.0 (10 columnas de decimales)
+        let zHtml = `
+          <div class="table-scroll-container">
+            <table class="interactive-stat-table">
+              <thead>
+                <tr>
+                  <th>z</th>
+                  <th>0.00</th>
+                  <th>0.01</th>
+                  <th>0.02</th>
+                  <th>0.03</th>
+                  <th>0.04</th>
+                  <th>0.05</th>
+                  <th>0.06</th>
+                  <th>0.07</th>
+                  <th>0.08</th>
+                  <th>0.09</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+
+        for (let r = 0; r <= 30; r++) {
+          const zRow = (r / 10).toFixed(1);
+          zHtml += `<tr><td><strong>${zRow}</strong></td>`;
+          for (let c = 0; c <= 9; c++) {
+            const zVal = parseFloat(zRow) + (c / 100);
+            const prob = normalCDF(zVal);
+            let probStr = prob.toFixed(4).substring(1); // ej: ".9505"
+            if (probStr === "1.0000") probStr = ".9999";
+            zHtml += `
+              <td class="table-cell-val" 
+                  data-z="${zVal.toFixed(2)}" 
+                  data-prob="${prob.toFixed(4)}" 
+                  onclick="selectZTableCell(this, ${zVal})">${probStr}</td>`;
+          }
+          zHtml += '</tr>';
+        }
+
+        zHtml += `
+              </tbody>
+            </table>
+          </div>
+        `;
+        tableContent.innerHTML = zHtml;
+
+      } else {
+        // Generar Tabla t-Student con grados de libertad y significación
+        const rows = [10, 15, 20, 24, 30, 35, 40, 48, 60, 63, 80, 99, 120, "∞"];
+        
+        const tTableData = {
+          10: ["1.812", "2.228", "2.764", "3.169"],
+          15: ["1.753", "2.131", "2.602", "2.947"],
+          20: ["1.725", "2.086", "2.528", "2.845"],
+          24: ["1.711", "2.064", "2.492", "2.797"],
+          30: ["1.697", "2.042", "2.457", "2.750"],
+          35: ["1.690", "2.030", "2.438", "2.724"], 
+          40: ["1.684", "2.021", "2.423", "2.704"], 
+          48: ["1.677", "2.010", "2.407", "2.682"], 
+          60: ["1.671", "2.000", "2.390", "2.660"], 
+          63: ["1.669", "2.000", "2.387", "2.656"], 
+          80: ["1.664", "1.990", "2.374", "2.639"], 
+          99: ["1.660", "1.984", "2.365", "2.626"], 
+          120: ["1.658", "1.980", "2.358", "2.617"],
+          "∞": ["1.645", "1.960", "2.326", "2.576"]
+        };
+
+        let rowsHtml = '';
+        rows.forEach(r => {
+          rowsHtml += `
+            <tr>
+              <td><strong>df = ${r}</strong></td>
+              <td class="table-cell-val" onclick="selectTTableCell(this, '${r}', 0)">1.753</td>
+              <td class="table-cell-val" onclick="selectTTableCell(this, '${r}', 1)">2.131</td>
+              <td class="table-cell-val" onclick="selectTTableCell(this, '${r}', 2)">2.602</td>
+              <td class="table-cell-val" onclick="selectTTableCell(this, '${r}', 3)">2.947</td>
+            </tr>
+          `;
+        });
+
+        // Corregir valores reales de la celda de t en la UI para cada fila
+        rows.forEach((r, idx) => {
+          rowsHtml = rowsHtml.replace(`onclick="selectTTableCell(this, '${r}', 0)">1.753`, `onclick="selectTTableCell(this, '${r}', 0)">${tTableData[r][0]}`);
+          rowsHtml = rowsHtml.replace(`onclick="selectTTableCell(this, '${r}', 1)">2.131`, `onclick="selectTTableCell(this, '${r}', 1)">${tTableData[r][1]}`);
+          rowsHtml = rowsHtml.replace(`onclick="selectTTableCell(this, '${r}', 2)">2.602`, `onclick="selectTTableCell(this, '${r}', 2)">${tTableData[r][2]}`);
+          rowsHtml = rowsHtml.replace(`onclick="selectTTableCell(this, '${r}', 3)">2.947`, `onclick="selectTTableCell(this, '${r}', 3)">${tTableData[r][3]}`);
+        });
+
+        tableContent.innerHTML = `
+          <div class="table-scroll-container">
+            <table class="interactive-stat-table">
+              <thead>
+                <tr>
+                  <th>Grados de Libertad (df)</th>
+                  <th>Una cola: 0.05<br>Dos colas: 0.10</th>
+                  <th>Una cola: 0.025<br>Dos colas: 0.05</th>
+                  <th>Una cola: 0.01<br>Dos colas: 0.02</th>
+                  <th>Una cola: 0.005<br>Dos colas: 0.01</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rowsHtml}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      drawNormalCurve(6, null, null); 
+      triggerMathRender();
+    }
+
+    function selectZTableCell(cellElement, zVal) {
+      const expectedAbs = Math.abs(parseFloat(activeExercise.zCrit));
+      const isCorrect = Math.abs(zVal - expectedAbs) < 0.015;
+
+      const slotElement = document.getElementById('slot-crit-val');
+
+      document.querySelectorAll('#phase-6 .table-cell-val').forEach(c => {
+        c.classList.remove('correct-cell', 'wrong-cell');
+      });
+
+      if (isCorrect) {
+        cellElement.classList.add('correct-cell');
+        
+        slotElement.innerText = activeExercise.zCrit.toString();
+        slotElement.classList.add('correct-slot', 'filled');
+        selectedCritValue = activeExercise.zCrit.toString();
+
+        drawNormalCurve(6, activeExercise.zCrit, null);
+        document.getElementById('btn-next-6').classList.remove('disabled');
+      } else {
+        cellElement.classList.add('wrong-cell');
+        slotElement.className = 'math-slot';
+        slotElement.innerText = '?';
+        setTimeout(() => {
+          cellElement.classList.remove('wrong-cell');
+        }, 500);
+      }
+    }
+
+    function selectTTableCell(cellElement, rowDf, colIndex) {
+      const df = parseInt(activeExercise.n) - 1;
+      const direction = activeExercise.direction;
+
+      let expectedCol = 0; // unilateral 0.05 (index 0)
+      if (direction === 'two-tailed') {
+        expectedCol = 1; // bilateral 0.05 (index 1)
+      }
+
+      const isCorrectRow = rowDf === df.toString() || (rowDf === '∞' && df > 120);
+      const isCorrectCol = colIndex === expectedCol;
+
+      const slotElement = document.getElementById('slot-crit-val');
+
+      document.querySelectorAll('#phase-6 .table-cell-val').forEach(c => {
+        c.classList.remove('correct-cell', 'wrong-cell');
+      });
+
+      if (isCorrectRow && isCorrectCol) {
+        cellElement.classList.add('correct-cell');
+        
+        slotElement.innerText = activeExercise.zCrit.toString();
+        slotElement.classList.add('correct-slot', 'filled');
+        selectedCritValue = activeExercise.zCrit.toString();
+
+        drawNormalCurve(6, activeExercise.zCrit, null);
+        document.getElementById('btn-next-6').classList.remove('disabled');
+      } else {
+        cellElement.classList.add('wrong-cell');
+        slotElement.className = 'math-slot';
+        slotElement.innerText = '?';
+        setTimeout(() => {
+          cellElement.classList.remove('wrong-cell');
+        }, 500);
+      }
+    }
+
+    // FASE 6: P-Valor Interactivo
+    let activePValSlot = null;
+    let pSelections = { 'op1': null, 'val1': null, 'op2': null, 'val2': null };
+
+    function initPValFormulaPhase() {
+      activePValSlot = null;
+      document.getElementById('btn-next-7').classList.add('disabled');
+
+      const container = document.getElementById('p-formula-container');
+      const dist = activeExercise.dist;
+      const direction = activeExercise.direction;
+
+      pSelections = { 'op1': null, 'val1': null, 'op2': null, 'val2': null };
+
+      if (direction === 'left') {
+        container.innerHTML = `
+          <span>p-valor = P(</span>
+          <span class="highlight-cyan" style="font-weight: 800;">${dist}</span>
+          <div class="math-slot" id="slot-p-op1" onclick="setActivePValSlot('op1')">?</div>
+          <div class="math-slot" id="slot-p-val1" onclick="setActivePValSlot('val1')">?</div>
+          <span>)</span>
+        `;
+        pSelections['op2'] = 'N/A';
+        pSelections['val2'] = 'N/A';
+      } else if (direction === 'right') {
+        container.innerHTML = `
+          <span>p-valor = P(</span>
+          <span class="highlight-cyan" style="font-weight: 800;">${dist}</span>
+          <div class="math-slot" id="slot-p-op1" onclick="setActivePValSlot('op1')">?</div>
+          <div class="math-slot" id="slot-p-val1" onclick="setActivePValSlot('val1')">?</div>
+          <span>) = 1 - P(</span>
+          <span class="highlight-cyan" style="font-weight: 800;">${dist}</span>
+          <div class="math-slot" id="slot-p-op2" onclick="setActivePValSlot('op2')">?</div>
+          <div class="math-slot" id="slot-p-val2" onclick="setActivePValSlot('val2')">?</div>
+          <span>)</span>
+        `;
+      } else { // two-tailed
+        container.innerHTML = `
+          <span>p-valor = 2 * P(</span>
+          <span class="highlight-cyan" style="font-weight: 800;">${dist}</span>
+          <div class="math-slot" id="slot-p-op1" onclick="setActivePValSlot('op1')">?</div>
+          <div class="math-slot" id="slot-p-val1" onclick="setActivePValSlot('val1')">?</div>
+          <span>) = 2 * ( 1 - P(</span>
+          <span class="highlight-cyan" style="font-weight: 800;">${dist}</span>
+          <div class="math-slot" id="slot-p-op2" onclick="setActivePValSlot('op2')">?</div>
+          <div class="math-slot" id="slot-p-val2" onclick="setActivePValSlot('val2')">?</div>
+          <span>) )</span>
+        `;
+      }
+
+      setActivePValSlot('op1');
+    }
+
+    function setActivePValSlot(slotId) {
+      activePValSlot = slotId;
+      document.querySelectorAll('#phase-6 .math-slot').forEach(s => s.classList.remove('active-slot'));
+      const activeSlotElement = document.getElementById(`slot-p-${slotId}`);
+      if (activeSlotElement) {
+        activeSlotElement.classList.add('active-slot');
+      }
+
+      const poolContainer = document.getElementById('pool-items-p-container');
+      poolContainer.innerHTML = '';
+
+      if (slotId.includes('op')) {
+        const ops = ['≥', '<', '=', '>', '≤', '≠'];
+        ops.forEach(op => {
+          const btn = document.createElement('button');
+          btn.className = 'pool-item';
+          btn.innerText = op;
+          btn.onclick = () => selectPValFormulaValue(op);
+          poolContainer.appendChild(btn);
+        });
+      } else {
+        const dist = activeExercise.dist;
+        const calcValLabel = `${dist}<sub>calc</sub>`;
+        const absCalcValLabel = `|${dist}<sub>calc</sub>|`;
+        const critValLabel = `${dist}<sub>crit</sub>`;
+
+        const distractors = [`μ₀`, `x̄`, `α` ];
+        let pool = [calcValLabel, absCalcValLabel, critValLabel, ...distractors];
+
+        pool = [...new Set(pool)];
+        pool.sort(() => Math.random() - 0.5);
+
+        pool.forEach(htmlLabel => {
+          const btn = document.createElement('button');
+          btn.className = 'pool-item';
+          btn.innerHTML = htmlLabel;
+          const cleanText = htmlLabel.replace(/<[^>]*>/g, '');
+          btn.onclick = () => selectPValFormulaValue(cleanText);
+          poolContainer.appendChild(btn);
+        });
+      }
+    }
+
+    function selectPValFormulaValue(value) {
+      if (!activePValSlot) return;
+
+      const slotElement = document.getElementById(`slot-p-${activePValSlot}`);
+      slotElement.className = 'math-slot';
+
+      const dist = activeExercise.dist;
+      let expectedOp1 = '≥';
+      let expectedOp2 = '<';
+      let expectedVal1 = dist + 'calc';
+      let expectedVal2 = dist + 'calc';
+
+      if (activeExercise.direction === 'left') {
+        expectedOp1 = '≤';
+      } else if (activeExercise.direction === 'two-tailed') {
+        expectedOp1 = '≥';
+        expectedVal1 = '|' + dist + 'calc|';
+        expectedVal2 = '|' + dist + 'calc|';
+      }
+
+      const expectedVal = activePValSlot === 'op1' ? expectedOp1
+                        : activePValSlot === 'op2' ? expectedOp2
+                        : activePValSlot === 'val1' ? expectedVal1
+                        : expectedVal2;
+
+      if (value === expectedVal) {
+        let displayValue = value;
+        if (value === dist + 'calc') {
+          displayValue = `${dist}<sub>calc</sub>`;
+        } else if (value === '|' + dist + 'calc|') {
+          displayValue = `|${dist}<sub>calc</sub>|`;
+        }
+        slotElement.innerHTML = displayValue;
+        slotElement.classList.add('correct-slot', 'filled');
+        pSelections[activePValSlot] = value;
+
+        let allFilled = Object.values(pSelections).every(v => v !== null);
+        if (allFilled) {
+          document.getElementById('btn-next-7').classList.remove('disabled');
+          activePValSlot = null;
+          document.querySelectorAll('#phase-6 .math-slot').forEach(s => s.classList.remove('active-slot'));
+          document.getElementById('pool-items-p-container').innerHTML = '';
+        } else {
+          const order = activeExercise.direction === 'left' ? ['op1', 'val1'] : ['op1', 'val1', 'op2', 'val2'];
+          const nextSlot = order.find(k => pSelections[k] === null);
+          if (nextSlot) setActivePValSlot(nextSlot);
+        }
+      } else {
+        slotElement.classList.add('wrong-slot');
+        setTimeout(() => {
+          slotElement.classList.remove('wrong-slot');
+        }, 500);
+      }
+    }
+
+    // GAUSSIAN CURVE
+    function drawNormalCurve(phase, zCrit, zCalc) {
+      const svg = document.getElementById(`normal-curve-svg-${phase}`);
+      const mean = 200;
+      const stdDev = 50;
+      const scaleY = 220;
+
+      function normalPdf(x) {
+        return Math.exp(-0.5 * Math.pow((x - mean) / stdDev, 2));
+      }
+
+      let curvePoints = [];
+      for (let x = 10; x <= 390; x++) {
+        let y = 170 - normalPdf(x) * scaleY;
+        curvePoints.push(`${x},${y}`);
+      }
+      const bgPath = document.getElementById(`curve-bg-path-${phase}`);
+      bgPath.setAttribute('d', `M 10,170 L ${curvePoints.join(' L ')} L 390,170`);
+
+      function zToX(z) { return mean + z * stdDev; }
+
+      const rightPath = document.getElementById(`critical-zone-right-path-${phase}`);
+      const rightLine = document.getElementById(`critical-threshold-right-line-${phase}`);
+      if (rightPath) rightPath.style.display = 'none';
+      if (rightLine) rightLine.style.display = 'none';
+
+      const critPath = document.getElementById(`critical-zone-path-${phase}`);
+      const critLine = document.getElementById(`critical-threshold-line-${phase}`);
+      const infoText = document.getElementById(`plot-overlay-info-${phase}`);
+
+      if (activeExercise.direction === 'left') {
+        const xCrit = zToX(zCrit);
+        const critPoints = [];
+        critPoints.push(`10,170`);
+        for (let x = 10; x <= xCrit; x++) {
+          let y = 170 - normalPdf(x) * scaleY;
+          critPoints.push(`${x},${y}`);
+        }
+        critPoints.push(`${xCrit},170`);
+        critPath.setAttribute('d', `M ${critPoints.join(' L ')} Z`);
+        if (critLine) {
+          critLine.setAttribute('x1', xCrit);
+          critLine.setAttribute('y1', 170 - normalPdf(xCrit) * scaleY);
+          critLine.setAttribute('x2', xCrit);
+          critLine.setAttribute('y2', 170);
+        }
+
+        if (infoText) {
+          infoText.innerHTML = `<span style="color: var(--accent-red); font-weight: 800;">${activeExercise.dist}_crit = ${zCrit}</span><span>0</span>`;
+        }
+      } else if (activeExercise.direction === 'right') {
+        const xCrit = zToX(zCrit);
+        const critPoints = [];
+        critPoints.push(`${xCrit},170`);
+        for (let x = xCrit; x <= 390; x++) {
+          let y = 170 - normalPdf(x) * scaleY;
+          critPoints.push(`${x},${y}`);
+        }
+        critPoints.push('390,170');
+        critPath.setAttribute('d', `M ${critPoints.join(' L ')} Z`);
+        if (critLine) {
+          critLine.setAttribute('x1', xCrit);
+          critLine.setAttribute('y1', 170 - normalPdf(xCrit) * scaleY);
+          critLine.setAttribute('x2', xCrit);
+          critLine.setAttribute('y2', 170);
+        }
+
+        if (infoText) {
+          infoText.innerHTML = `<span>0</span><span style="color: var(--accent-red); font-weight: 800;">${activeExercise.dist}_crit = ${zCrit}</span>`;
+        }
+      } else {
+        const absCrit = Math.abs(zCrit);
+        const xCritL = zToX(-absCrit);
+        const xCritR = zToX(absCrit);
+
+        const critPointsL = [];
+        critPointsL.push(`10,170`);
+        for (let x = 10; x <= xCritL; x++) {
+          let y = 170 - normalPdf(x) * scaleY;
+          critPointsL.push(`${x},${y}`);
+        }
+        critPointsL.push(`${xCritL},170`);
+        critPath.setAttribute('d', `M ${critPointsL.join(' L ')} Z`);
+        if (critLine) {
+          critLine.setAttribute('x1', xCritL);
+          critLine.setAttribute('y1', 170 - normalPdf(xCritL) * scaleY);
+          critLine.setAttribute('x2', xCritL);
+          critLine.setAttribute('y2', 170);
+        }
+
+        if (rightPath) rightPath.style.display = 'block';
+        if (rightLine) rightLine.style.display = 'block';
+        const critPointsR = [];
+        critPointsR.push(`${xCritR},170`);
+        for (let x = xCritR; x <= 390; x++) {
+          let y = 170 - normalPdf(x) * scaleY;
+          critPointsR.push(`${x},${y}`);
+        }
+        critPointsR.push(`390,170`);
+        if (rightPath) rightPath.setAttribute('d', `M ${critPointsR.join(' L ')} Z`);
+        if (rightLine) {
+          rightLine.setAttribute('x1', xCritR);
+          rightLine.setAttribute('y1', 170 - normalPdf(xCritR) * scaleY);
+          rightLine.setAttribute('x2', xCritR);
+          rightLine.setAttribute('y2', 170);
+        }
+
+        if (infoText) {
+          infoText.innerHTML = `<span style="color: var(--accent-red); font-weight: 800;">-${absCrit}</span><span>0</span><span style="color: var(--accent-red); font-weight: 800;">+${absCrit}</span>`;
+        }
+      }
+
+      if (phase === 6) {
+        document.getElementById('region-subtitle-text').innerHTML = `Nivel de significación <span class="highlight-cyan">α = 0.05</span> en contraste <strong>${activeExercise.direction === 'two-tailed' ? 'bilateral' : 'unilateral'}</strong>.`;
+        document.getElementById('region-crit-text').innerHTML = activeExercise.direction === 'two-tailed'
+          ? `Rechazaremos $H_0$ si el valor observado es menor que $-${Math.abs(activeExercise.zCrit)}$ o mayor que $+${Math.abs(activeExercise.zCrit)}$.`
+          : (activeExercise.direction === 'left' ? `Rechazaremos $H_0$ si el valor observado cae a la izquierda de $Z_{crit} = ${activeExercise.zCrit}$.` : `Rechazaremos $H_0$ si el valor observado cae a la derecha de $Z_{crit} = ${activeExercise.zCrit}$.`);
+        triggerMathRender();
+      }
+
+      if (zCalc !== null && phase === 7) {
+        const absCalc = Math.abs(zCalc);
+        const xCalcL = zToX(-absCalc);
+        const xCalcR = zToX(absCalc);
+
+        const calcLine = document.getElementById(`z-calc-line-7`);
+        const calcDot = document.getElementById(`z-calc-dot-7`);
+        const calcLineRight = document.getElementById(`z-calc-right-line-7`);
+        const calcDotRight = document.getElementById(`z-calc-right-dot-7`);
+
+        if (calcLineRight) calcLineRight.style.display = 'none';
+        if (calcDotRight) calcDotRight.style.display = 'none';
+
+        const pPath = document.getElementById(`p-value-path-7`);
+        const pPathRight = document.getElementById(`p-value-right-path-7`);
+        if (pPathRight) pPathRight.style.display = 'none';
+
+        if (activeExercise.direction === 'two-tailed') {
+          // Bilateral: draw symmetric lines and dots
+          calcLine.setAttribute('x1', xCalcL);
+          calcLine.setAttribute('y1', 170 - normalPdf(xCalcL) * scaleY);
+          calcLine.setAttribute('x2', xCalcL);
+          calcLine.setAttribute('y2', 170);
+
+          calcDot.setAttribute('cx', xCalcL);
+          calcDot.setAttribute('cy', 170 - normalPdf(xCalcL) * scaleY);
+
+          if (calcLineRight && calcDotRight) {
+            calcLineRight.style.display = 'block';
+            calcDotRight.style.display = 'block';
+            calcLineRight.setAttribute('x1', xCalcR);
+            calcLineRight.setAttribute('y1', 170 - normalPdf(xCalcR) * scaleY);
+            calcLineRight.setAttribute('x2', xCalcR);
+            calcLineRight.setAttribute('y2', 170);
+
+            calcDotRight.setAttribute('cx', xCalcR);
+            calcDotRight.setAttribute('cy', 170 - normalPdf(xCalcR) * scaleY);
+          }
+
+          // Shading both sides
+          if (pPath) {
+            const pPointsL = [];
+            pPointsL.push(`10,170`);
+            for (let x = 10; x <= xCalcL; x++) {
+              let y = 170 - normalPdf(x) * scaleY;
+              pPointsL.push(`${x},${y}`);
+            }
+            pPointsL.push(`${xCalcL},170`);
+            pPath.setAttribute('d', `M ${pPointsL.join(' L ')} Z`);
+          }
+
+          if (pPathRight) {
+            pPathRight.style.display = 'block';
+            const pPointsR = [];
+            pPointsR.push(`${xCalcR},170`);
+            for (let x = xCalcR; x <= 390; x++) {
+              let y = 170 - normalPdf(x) * scaleY;
+              pPointsR.push(`${x},${y}`);
+            }
+            pPointsR.push(`390,170`);
+            pPathRight.setAttribute('d', `M ${pPointsR.join(' L ')} Z`);
+          }
+
+        } else {
+          // Unilateral
+          const xCalc = zToX(zCalc);
+          const yCalcVal = 170 - normalPdf(xCalc) * scaleY;
+
+          calcLine.setAttribute('x1', xCalc);
+          calcLine.setAttribute('y1', yCalcVal);
+          calcLine.setAttribute('x2', xCalc);
+          calcLine.setAttribute('y2', 170);
+
+          calcDot.setAttribute('cx', xCalc);
+          calcDot.setAttribute('cy', yCalcVal);
+
+          const pPoints = [];
+          if (activeExercise.direction === 'left') {
+            pPoints.push(`10,170`);
+            for (let x = 10; x <= xCalc; x++) {
+              let y = 170 - normalPdf(x) * scaleY;
+              pPoints.push(`${x},${y}`);
+            }
+            pPoints.push(`${xCalc},170`);
+            pPath.setAttribute('d', `M ${pPoints.join(' L ')} Z`);
+          } else {
+            pPoints.push(`${xCalc},170`);
+            for (let x = xCalc; x <= 390; x++) {
+              let y = 170 - normalPdf(x) * scaleY;
+              pPoints.push(`${x},${y}`);
+            }
+            pPoints.push(`390,170`);
+            pPath.setAttribute('d', `M ${pPoints.join(' L ')} Z`);
+          }
+        }
+
+        document.getElementById('calc-subtitle-text').innerHTML = `Estadístico observado: $${activeExercise.dist}_{calc} = ${activeExercise.zCalc}$ | p-valor = $${activeExercise.pValue}$.`;
+        document.getElementById('calc-formula-math').innerHTML = `
+          $$${activeExercise.dist}_{calc} = \\frac{${activeExercise.xbar} - ${activeExercise.mu0}}{${activeExercise.sigma} / \\sqrt{${activeExercise.n}}} = ${activeExercise.zCalc}$$
+          Probabilidad acumulada bajo el supuesto nulo: $p\\text{-valor} = ${activeExercise.pValue}$.
+        `;
+
+        if (infoText) {
+          if (activeExercise.direction === 'two-tailed') {
+            infoText.innerHTML = `<span style="color: var(--accent-cyan); font-weight:800;">${activeExercise.dist}_calc = ${activeExercise.zCalc}</span><span>0</span><span style="color: var(--accent-red); font-weight:800;">Z_crit = ±${Math.abs(activeExercise.zCrit)}</span>`;
+          } else {
+            infoText.innerHTML = `<span style="color: var(--accent-cyan); font-weight:800;">${activeExercise.dist}_calc = ${activeExercise.zCalc}</span><span style="color: var(--accent-red); font-weight:800;">Z_crit = ${activeExercise.zCrit}</span>`;
+          }
+        }
+        triggerMathRender();
+      }
+    }
+
+    // FASE 7: Inferencia y Veredicto (Montaje de intervalos y toma de decisión)
+    let activeDecSlot = null;
+    let decSelections = { 'crit1': null, 'crit2': null };
+    let selectedMembership = null;
+
+    function initDecisionPhase() {
+      activeDecSlot = null;
+      decSelections = { 'crit1': null, 'crit2': null };
+      selectedMembership = null;
+
+      document.getElementById('dec-calc-stat-val').innerHTML = `${activeExercise.dist}<sub>calc</sub> = ${activeExercise.zCalc}`;
+      document.getElementById('dec-crit-stat-val').innerHTML = `${activeExercise.dist}<sub>crit</sub> = ${activeExercise.zCrit}`;
+      document.getElementById('dec-p-val-ref').innerHTML = `p = ${activeExercise.pValue}`;
+      
+      // Mostrar y ocultar paneles
+      document.getElementById('dec-pool-container-wrapper').style.display = 'block';
+      document.getElementById('dec-membership-container').style.display = 'none';
+      document.getElementById('dec-buttons-container').style.display = 'none';
+      document.getElementById('decision-feedback').style.display = 'none';
+      document.getElementById('btn-next-8').classList.add('disabled');
+      
+      document.getElementById('choice-member-accept').className = 'choice-card';
+      document.getElementById('choice-member-reject').className = 'choice-card';
+      document.getElementById('decision-reject').className = 'btn-action';
+      document.getElementById('decision-accept').className = 'btn-action';
+
+      const dist = activeExercise.dist;
+      const direction = activeExercise.direction;
+
+      const acceptanceEl = document.getElementById('dec-interval-acceptance');
+      const criticalEl = document.getElementById('dec-interval-critical');
+
+      if (direction === 'left') {
+        acceptanceEl.innerHTML = `[ <div class="math-slot" id="slot-dec-crit1" onclick="setActiveDecSlot('crit1')">?</div> , +∞ )`;
+        criticalEl.innerHTML = `( -∞ , <span id="label-dec-crit2">?</span> )`;
+      } else if (direction === 'right') {
+        acceptanceEl.innerHTML = `( -∞ , <div class="math-slot" id="slot-dec-crit1" onclick="setActiveDecSlot('crit1')">?</div> ]`;
+        criticalEl.innerHTML = `( <span id="label-dec-crit2">?</span> , +∞ )`;
+      } else { // two-tailed
+        acceptanceEl.innerHTML = `[ <div class="math-slot" id="slot-dec-crit1" onclick="setActiveDecSlot('crit1')">?</div> , <div class="math-slot" id="slot-dec-crit2" onclick="setActiveDecSlot('crit2')">?</div> ]`;
+        criticalEl.innerHTML = `( -∞ , <span id="label-dec-crit3">?</span> ) ∪ ( <span id="label-dec-crit4">?</span> , +∞ )`;
+      }
+
+      setActiveDecSlot('crit1');
+    }
+
+    function setActiveDecSlot(slotId) {
+      activeDecSlot = slotId;
+      document.querySelectorAll('#phase-7 .math-slot').forEach(s => s.classList.remove('active-slot'));
+      const activeSlotElement = document.getElementById(`slot-dec-${slotId}`);
+      if (activeSlotElement) {
+        activeSlotElement.classList.add('active-slot');
+      }
+
+      const poolContainer = document.getElementById('pool-items-dec-container');
+      poolContainer.innerHTML = '';
+
+      const zCritVal = parseFloat(activeExercise.zCrit);
+      let pool = [
+        zCritVal.toString(),
+        (-zCritVal).toString(),
+        activeExercise.zCalc.toString(),
+        activeExercise.mu0.toString(),
+        "0",
+        "0.05"
+      ];
+      pool = [...new Set(pool)].sort(() => Math.random() - 0.5);
+
+      pool.forEach(val => {
+        const btn = document.createElement('button');
+        btn.className = 'pool-item';
+        btn.innerText = val;
+        btn.onclick = () => selectDecValue(val);
+        poolContainer.appendChild(btn);
+      });
+    }
+
+    function selectDecValue(value) {
+      if (!activeDecSlot) return;
+
+      const direction = activeExercise.direction;
+      const zCritVal = parseFloat(activeExercise.zCrit);
+      
+      let expectedVal = "";
+      if (direction === 'left' || direction === 'right') {
+        expectedVal = zCritVal.toString();
+      } else {
+        if (activeDecSlot === 'crit1') {
+          expectedVal = (-Math.abs(zCritVal)).toString();
+        } else {
+          expectedVal = Math.abs(zCritVal).toString();
+        }
+      }
+
+      const slotElement = document.getElementById(`slot-dec-${activeDecSlot}`);
+      slotElement.className = 'math-slot';
+
+      if (parseFloat(value) === parseFloat(expectedVal)) {
+        slotElement.innerText = value;
+        slotElement.classList.add('correct-slot', 'filled');
+        decSelections[activeDecSlot] = value;
+
+        if (direction === 'left') {
+          document.getElementById('label-dec-crit2').innerText = value;
+          document.getElementById('label-dec-crit2').className = 'highlight-red';
+        } else if (direction === 'right') {
+          document.getElementById('label-dec-crit2').innerText = value;
+          document.getElementById('label-dec-crit2').className = 'highlight-red';
+        } else {
+          if (activeDecSlot === 'crit1') {
+            document.getElementById('label-dec-crit3').innerText = value;
+            document.getElementById('label-dec-crit3').className = 'highlight-red';
+          } else {
+            document.getElementById('label-dec-crit4').innerText = value;
+            document.getElementById('label-dec-crit4').className = 'highlight-red';
+          }
+        }
+
+        let allFilled = false;
+        if (direction === 'two-tailed') {
+          allFilled = decSelections['crit1'] !== null && decSelections['crit2'] !== null;
+        } else {
+          allFilled = decSelections['crit1'] !== null;
+        }
+
+        if (allFilled) {
+          activeDecSlot = null;
+          document.querySelectorAll('#phase-7 .math-slot').forEach(s => s.classList.remove('active-slot'));
+          document.getElementById('pool-items-dec-container').innerHTML = '';
+          document.getElementById('dec-pool-container-wrapper').style.display = 'none';
+          
+          document.getElementById('dec-membership-container').style.display = 'block';
+        } else {
+          if (activeDecSlot === 'crit1' && direction === 'two-tailed') {
+            setActiveDecSlot('crit2');
+          }
+        }
+      } else {
+        slotElement.classList.add('wrong-slot');
+        setTimeout(() => {
+          slotElement.classList.remove('wrong-slot');
+        }, 500);
+      }
+    }
+
+    function selectMembership(regionType) {
+      const isReject = activeExercise.direction === 'left' ? activeExercise.zCalc < activeExercise.zCrit
+                     : activeExercise.direction === 'right' ? activeExercise.zCalc > activeExercise.zCrit
+                     : Math.abs(activeExercise.zCalc) > Math.abs(activeExercise.zCrit);
+
+      const expectedRegion = isReject ? 'critical' : 'acceptance';
+
+      const choiceAccept = document.getElementById('choice-member-accept');
+      const choiceReject = document.getElementById('choice-member-reject');
+
+      choiceAccept.className = 'choice-card';
+      choiceReject.className = 'choice-card';
+
+      if (regionType === expectedRegion) {
+        selectedMembership = regionType;
+        if (regionType === 'acceptance') {
+          choiceAccept.className = 'choice-card correct-selected';
+        } else {
+          choiceReject.className = 'choice-card correct-selected';
+        }
+        
+        document.getElementById('dec-buttons-container').style.display = 'flex';
+      } else {
+        if (regionType === 'acceptance') {
+          choiceAccept.className = 'choice-card wrong-selected';
+        } else {
+          choiceReject.className = 'choice-card wrong-selected';
+        }
+        setTimeout(() => {
+          choiceAccept.className = 'choice-card';
+          choiceReject.className = 'choice-card';
+        }, 800);
+      }
+    }
+
+    function makeFinalDecision(isReject) {
+      const btnReject = document.getElementById('decision-reject');
+      const btnAccept = document.getElementById('decision-accept');
+      const feedback = document.getElementById('decision-feedback');
+      const feedbackTitle = document.getElementById('decision-feedback-title');
+      const feedbackText = document.getElementById('decision-feedback-text');
+      const nextBtn = document.getElementById('btn-next-8');
+
+      btnReject.className = 'btn-action';
+      btnAccept.className = 'btn-action';
+
+      let shouldReject = false;
+      if (activeExercise.direction === 'left' && activeExercise.zCalc < activeExercise.zCrit) shouldReject = true;
+      if (activeExercise.direction === 'right' && activeExercise.zCalc > activeExercise.zCrit) shouldReject = true;
+      if (activeExercise.direction === 'two-tailed' && Math.abs(activeExercise.zCalc) > Math.abs(activeExercise.zCrit)) shouldReject = true;
+
+      if (isReject === shouldReject) {
+        if (isReject) {
+          btnReject.className = 'btn-action correct-selected';
+          btnReject.style.borderColor = 'var(--accent-green)';
+          btnReject.style.boxShadow = 'var(--glow-green)';
+        } else {
+          btnAccept.className = 'btn-action correct-selected';
+          btnAccept.style.borderColor = 'var(--accent-green)';
+          btnAccept.style.boxShadow = 'var(--glow-green)';
+        }
+
+        feedback.className = "info-card green";
+        feedbackTitle.innerText = "¡Decisión Correcta!";
+        feedbackText.innerHTML = `Efectivamente debemos ${isReject ? '<strong>Rechazar H₀</strong>' : '<strong>No Rechazar H₀</strong>'}. El valor observado $${activeExercise.dist}_{calc} = ${activeExercise.zCalc}$ ${isReject ? 'pertenece a la región crítica (zona de rechazo)' : 'pertenece a la región de aceptación (no rechazo)'}.`;
+        nextBtn.classList.remove('disabled');
+      } else {
+        if (isReject) btnReject.className = 'btn-action wrong-selected';
+        else btnAccept.className = 'btn-action wrong-selected';
+
+        feedback.className = "info-card red";
+        feedbackTitle.innerText = "Revisa la decisión";
+        feedbackText.innerHTML = `Dado que el estadístico pertenece a la región de ${selectedMembership === 'critical' ? 'rechazo' : 'aceptación'}, la decisión correspondiente debe alinearse con esto.`;
+        nextBtn.classList.add('disabled');
+      }
+      feedback.style.display = 'block';
+      triggerMathRender();
+
+      document.getElementById('victory-hyp-text').innerHTML = `$\\mu_0 = ${activeExercise.mu0}$ frente a hipótesis alternante.`;
+      document.getElementById('victory-verdict-text').innerHTML = shouldReject ? `Rechazar H₀. ${activeExercise.rejectMessage}` : `No Rechazar H₀. No hay suficiente evidencia estadística para respaldar la sospecha.`;
+    }
+
+    // Cajón de navegación
+    function toggleDrawer(drawerId) {
+      const drawer = document.getElementById(drawerId);
+      const isCurrentlyOpen = drawer.classList.contains('open');
+      document.querySelectorAll('.drawer').forEach(d => d.classList.remove('open'));
+      if (!isCurrentlyOpen) drawer.classList.add('open');
+      triggerMathRender();
+    }
+
+    // Auto-completar fase actual
+    function autoCompleteCurrentPhase() {
+      if (currentPhase === 0) {
+        selectDistribution(activeExercise.dist);
+      } else if (currentPhase === 1) {
+        extSelections.mu0 = activeExercise.mu0;
+        extSelections.sigma = activeExercise.sigma;
+        extSelections.n = activeExercise.n;
+        extSelections.xbar = activeExercise.xbar;
+        
+        document.getElementById('slot-ext-mu0').innerText = activeExercise.mu0;
+        document.getElementById('slot-ext-mu0').className = 'extraction-slot correct-slot filled';
+        document.getElementById('slot-ext-sigma').innerText = activeExercise.sigma;
+        document.getElementById('slot-ext-sigma').className = 'extraction-slot correct-slot filled';
+        document.getElementById('slot-ext-n').innerText = activeExercise.n;
+        document.getElementById('slot-ext-n').className = 'extraction-slot correct-slot filled';
+        document.getElementById('slot-ext-xbar').innerText = activeExercise.xbar;
+        document.getElementById('slot-ext-xbar').className = 'extraction-slot correct-slot filled';
+
+        const feedback = document.getElementById('ext-feedback');
+        feedback.style.display = 'block';
+        feedback.className = "info-card green";
+        document.getElementById('ext-feedback-text').innerText = `¡Excelente! Has extraído todos los datos necesarios: media histórica (μ₀ = ${activeExercise.mu0}), desviación estándar (${activeExercise.dist === 'Z' ? 'σ' : 'S'} = ${activeExercise.sigma}), tamaño muestral (n = ${activeExercise.n}) y media observada (xbar = ${activeExercise.xbar}).`;
+        document.getElementById('btn-next-1').classList.remove('disabled');
+        activeExtSlot = null;
+        document.querySelectorAll('.extraction-slot').forEach(s => s.classList.remove('active-slot'));
+        document.getElementById('pool-items-ext-container').innerHTML = '';
+      } else if (currentPhase === 2) {
+        let h0OpExpected = '≥';
+        let h1OpExpected = '<';
+        if (activeExercise.direction === 'right') {
+          h0OpExpected = '≤';
+          h1OpExpected = '>';
+        } else if (activeExercise.direction === 'two-tailed') {
+          h0OpExpected = '=';
+          h1OpExpected = '≠';
+        }
+
+        hypSelections['h0-op'] = h0OpExpected;
+        hypSelections['h0-val'] = activeExercise.mu0;
+        hypSelections['h1-op'] = h1OpExpected;
+        hypSelections['h1-val'] = activeExercise.mu0;
+
+        document.getElementById('slot-h0-op').innerText = h0OpExpected;
+        document.getElementById('slot-h0-op').className = 'hyp-slot filled correct-slot';
+        document.getElementById('slot-h0-val').innerText = activeExercise.mu0;
+        document.getElementById('slot-h0-val').className = 'hyp-slot filled correct-slot';
+        document.getElementById('slot-h1-op').innerText = h1OpExpected;
+        document.getElementById('slot-h1-op').className = 'hyp-slot filled correct-slot';
+        document.getElementById('slot-h1-val').innerText = activeExercise.mu0;
+        document.getElementById('slot-h1-val').className = 'hyp-slot filled correct-slot';
+
+        const feedback = document.getElementById('hyp-feedback');
+        const feedbackText = document.getElementById('hyp-feedback-text');
+        feedback.style.display = 'block';
+        feedbackText.innerHTML = `Contraste <strong>${activeExercise.direction === 'left' ? 'unilateral izquierdo' : (activeExercise.direction === 'right' ? 'unilateral derecho' : 'bilateral')}</strong> para verificar ${activeExercise.claim}.`;
+        document.getElementById('btn-next-2').classList.remove('disabled');
+        activeHypSlot = null;
+        document.querySelectorAll('.hyp-slot').forEach(s => s.classList.remove('selected-slot'));
+        document.getElementById('pool-items-container').innerHTML = '';
+        triggerMathRender();
+      } else if (currentPhase === 3) {
+        mathSelections.xbar = activeExercise.xbar;
+        mathSelections.mu0 = activeExercise.mu0;
+        mathSelections.n = activeExercise.n;
+
+        document.getElementById('slot-f-xbar').innerText = activeExercise.xbar;
+        document.getElementById('slot-f-xbar').className = 'math-slot correct-slot filled';
+        document.getElementById('slot-f-mu0').innerText = activeExercise.mu0;
+        document.getElementById('slot-f-mu0').className = 'math-slot correct-slot filled';
+        document.getElementById('slot-f-n').innerText = activeExercise.n;
+        document.getElementById('slot-f-n').className = 'math-slot correct-slot filled';
+
+        const feedback = document.getElementById('param-feedback');
+        const feedbackText = document.getElementById('param-feedback-text');
+        feedback.style.display = 'block';
+        feedbackText.innerHTML = `Sustitución exitosa en la fórmula del estadístico $${activeExercise.dist}$.`;
+        document.getElementById('btn-next-3').classList.remove('disabled');
+        activeMathSlot = null;
+        document.querySelectorAll('.math-slot').forEach(s => s.classList.remove('active-slot'));
+        document.getElementById('pool-items-formula-container').innerHTML = '';
+        triggerMathRender();
+      } else if (currentPhase === 4) {
+        const dist = activeExercise.dist;
+        const zCalcVal = activeExercise.zCalc;
+        const absCalc = Math.abs(zCalcVal);
+        
+        let targetValue = "";
+        const slot = document.getElementById('slot-p-lookup-val');
+        if (slot) {
+          if (dist === 'Z') {
+            targetValue = normalCDF(absCalc).toFixed(4);
+            const cells = document.querySelectorAll('#phase-4 .table-cell-val');
+            cells.forEach(c => {
+              const val = parseFloat(c.getAttribute('data-z'));
+              if (Math.abs(val - absCalc) < 0.015) {
+                c.classList.add('correct-cell');
+                slot.innerHTML = c.innerHTML;
+              }
+            });
+            if (slot.innerText === '?') {
+              slot.innerText = targetValue;
+            }
+          } else {
+            const df = parseInt(activeExercise.n) - 1;
+            const cells = document.querySelectorAll('#phase-4 .table-cell-val');
+            let matched = false;
+            cells.forEach(c => {
+              if (c.getAttribute('onclick') && c.getAttribute('onclick').includes(`'${df}'`)) {
+                c.classList.add('correct-cell');
+                slot.innerHTML = c.innerHTML;
+                matched = true;
+              }
+            });
+            if (!matched) {
+              slot.innerText = absCalc.toString();
+            }
+          }
+          slot.className = 'math-slot correct-slot filled';
+        }
+        selectedPValLookupValue = slot ? slot.innerText : absCalc.toString();
+        document.getElementById('btn-next-4').classList.remove('disabled');
+      } else if (currentPhase === 5) {
+        selectContrastDir(activeExercise.direction);
+        selectAlpha('0.05');
+      } else if (currentPhase === 6) {
+        selectedCritValue = activeExercise.zCrit.toString();
+        const slot = document.getElementById('slot-crit-val');
+        if (slot) {
+          if (activeExercise.dist === 'Z') {
+            const expectedAbs = Math.abs(parseFloat(activeExercise.zCrit));
+            const cells = document.querySelectorAll('#phase-6 .table-cell-val');
+            cells.forEach(c => {
+              const val = parseFloat(c.getAttribute('data-z'));
+              if (Math.abs(val - expectedAbs) < 0.015) {
+                c.classList.add('correct-cell');
+                slot.innerHTML = c.innerHTML;
+              }
+            });
+          } else {
+            const df = parseInt(activeExercise.n) - 1;
+            const direction = activeExercise.direction;
+            let expectedCol = 0;
+            if (direction === 'two-tailed') expectedCol = 1;
+
+            const cells = document.querySelectorAll('#phase-6 .table-cell-val');
+            cells.forEach(c => {
+              if (c.getAttribute('onclick') && c.getAttribute('onclick').includes(`'${df}'`) && c.getAttribute('onclick').includes(`, ${expectedCol}`)) {
+                c.classList.add('correct-cell');
+                slot.innerHTML = c.innerHTML;
+              }
+            });
+          }
+          if (slot.innerText === '?') {
+            slot.innerText = activeExercise.zCrit;
+          }
+          slot.className = 'math-slot correct-slot filled';
+        }
+        drawNormalCurve(6, activeExercise.zCrit, null);
+        document.getElementById('btn-next-6').classList.remove('disabled');
+      } else if (currentPhase === 7) {
+        const dist = activeExercise.dist;
+        let expectedOp1 = '≥';
+        let expectedOp2 = '<';
+        let expectedVal1 = dist + 'calc';
+        let expectedVal2 = dist + 'calc';
+
+        if (activeExercise.direction === 'left') {
+          expectedOp1 = '≤';
+        } else if (activeExercise.direction === 'two-tailed') {
+          expectedOp1 = '≥';
+          expectedVal1 = '|' + dist + 'calc|';
+          expectedVal2 = '|' + dist + 'calc|';
+        }
+
+        pSelections['op1'] = expectedOp1;
+        pSelections['val1'] = expectedVal1;
+        pSelections['op2'] = expectedOp2;
+        pSelections['val2'] = expectedVal2;
+
+        const slotOp1 = document.getElementById('slot-p-op1');
+        const slotVal1 = document.getElementById('slot-p-val1');
+
+        if (slotOp1) {
+          slotOp1.innerText = expectedOp1;
+          slotOp1.className = 'math-slot correct-slot filled';
+        }
+        if (slotVal1) {
+          let displayVal1 = expectedVal1 === dist + 'calc' ? `${dist}<sub>calc</sub>` : `|${dist}<sub>calc</sub>|`;
+          slotVal1.innerHTML = displayVal1;
+          slotVal1.className = 'math-slot correct-slot filled';
+        }
+        
+        if (activeExercise.direction !== 'left') {
+          const slotOp2 = document.getElementById('slot-p-op2');
+          const slotVal2 = document.getElementById('slot-p-val2');
+          if (slotOp2) {
+            slotOp2.innerText = expectedOp2;
+            slotOp2.className = 'math-slot correct-slot filled';
+          }
+          if (slotVal2) {
+            let displayVal2 = expectedVal2 === dist + 'calc' ? `${dist}<sub>calc</sub>` : `|${dist}<sub>calc</sub>|`;
+            slotVal2.innerHTML = displayVal2;
+            slotVal2.className = 'math-slot correct-slot filled';
+          }
+        }
+
+        document.getElementById('btn-next-7').classList.remove('disabled');
+        activePValSlot = null;
+        document.querySelectorAll('#phase-7 .math-slot').forEach(s => s.classList.remove('active-slot'));
+        document.getElementById('pool-items-p-container').innerHTML = '';
+      } else if (currentPhase === 8) {
+        const direction = activeExercise.direction;
+        const zCritVal = parseFloat(activeExercise.zCrit);
+
+        if (direction === 'left' || direction === 'right') {
+          decSelections['crit1'] = zCritVal.toString();
+          const slot = document.getElementById('slot-dec-crit1');
+          if (slot) {
+            slot.innerText = zCritVal.toString();
+            slot.className = 'math-slot correct-slot filled';
+          }
+          const mirror = document.getElementById('label-dec-crit2');
+          if (mirror) {
+            mirror.innerText = zCritVal.toString();
+            mirror.className = 'highlight-red';
+          }
+        } else {
+          const c1Val = (-Math.abs(zCritVal)).toString();
+          const c2Val = Math.abs(zCritVal).toString();
+          decSelections['crit1'] = c1Val;
+          decSelections['crit2'] = c2Val;
+          const slot1 = document.getElementById('slot-dec-crit1');
+          const slot2 = document.getElementById('slot-dec-crit2');
+          if (slot1) {
+            slot1.innerText = c1Val;
+            slot1.className = 'math-slot correct-slot filled';
+          }
+          if (slot2) {
+            slot2.innerText = c2Val;
+            slot2.className = 'math-slot correct-slot filled';
+          }
+          const mirror1 = document.getElementById('label-dec-crit3');
+          const mirror2 = document.getElementById('label-dec-crit4');
+          if (mirror1) {
+            mirror1.innerText = c1Val;
+            mirror1.className = 'highlight-red';
+          }
+          if (mirror2) {
+            mirror2.innerText = c2Val;
+            mirror2.className = 'highlight-red';
+          }
+        }
+
+        const wrapper = document.getElementById('dec-pool-container-wrapper');
+        if (wrapper) wrapper.style.display = 'none';
+        
+        const memberContainer = document.getElementById('dec-membership-container');
+        if (memberContainer) memberContainer.style.display = 'block';
+
+        const isReject = direction === 'left' ? activeExercise.zCalc < activeExercise.zCrit
+                       : direction === 'right' ? activeExercise.zCalc > activeExercise.zCrit
+                       : Math.abs(activeExercise.zCalc) > Math.abs(activeExercise.zCrit);
+
+        const expectedRegion = isReject ? 'critical' : 'acceptance';
+        selectedMembership = expectedRegion;
+
+        const choiceAccept = document.getElementById('choice-member-accept');
+        const choiceReject = document.getElementById('choice-member-reject');
+        if (choiceAccept && choiceReject) {
+          choiceAccept.className = 'choice-card';
+          choiceReject.className = 'choice-card';
+          if (expectedRegion === 'acceptance') {
+            choiceAccept.className = 'choice-card correct-selected';
+          } else {
+            choiceReject.className = 'choice-card correct-selected';
+          }
+        }
+
+        const buttonsContainer = document.getElementById('dec-buttons-container');
+        if (buttonsContainer) buttonsContainer.style.display = 'flex';
+
+        makeFinalDecision(isReject);
+      }
+    }
+  </script>
+</body>
+</html>
