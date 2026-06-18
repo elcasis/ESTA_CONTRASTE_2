@@ -249,6 +249,7 @@
       padding: 16px 20px;
       display: grid;
       grid-template-columns: 1.1fr 0.9fr; /* Diseño horizontal a 2 columnas */
+      grid-template-rows: 100%;
       gap: 20px;
       opacity: 0;
       transform: translateX(100%);
@@ -275,6 +276,8 @@
       justify-content: space-between;
       overflow-y: auto;
       padding-right: 5px;
+      min-height: 0;
+      height: 100%;
     }
 
     .phase-col-right {
@@ -283,6 +286,8 @@
       justify-content: center;
       align-items: stretch;
       overflow-y: auto;
+      min-height: 0;
+      height: 100%;
     }
 
     /* TEXTOS Y TÍTULOS */
